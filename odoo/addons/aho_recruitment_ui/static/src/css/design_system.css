@@ -1,0 +1,78 @@
+/* Single source of design tokens for the recruitment workspace and the public interview page.
+   Reference: Venture CRM Dashboard UI Kit (Figma Community). No third-party assets copied. */
+:root {
+    /* Tokens from the Venture CRM kit (Figma Styleguide > Color Tokens).
+       Values marked "kit" were read from Figma variables; "approx" are tints chosen to match the kit screenshots. */
+    --aho-ink: #000000;              /* kit: Content/Dark/Primary */
+    --aho-muted: #727272;            /* kit: Content/Dark/Secondary */
+    --aho-on-primary: #ffffff;       /* kit: Content/Light/Primary */
+    --aho-outline: #e4e4e4;          /* kit: Border/Primary */
+    --aho-outline-strong: #c9c9c9;   /* approx: hover border */
+    --aho-card: #ffffff;             /* kit: Background/Primary */
+    --aho-surface: #ffffff;          /* kit: Background/Primary (page) */
+    --aho-sidebar-bg: #f9f9f9;       /* kit: Background/Secondary */
+    --aho-selected: #f2f2f2;         /* kit: Background/Tertiary, Action/Secondary/Selected */
+    --aho-primary: #000000;          /* kit: Action/Primary/Base */
+    --aho-primary-hover: #262626;    /* approx */
+    --aho-primary-container: #f2f2f2;
+    --aho-outline-action: #000000;   /* kit: Action/Outline/Base */
+    --aho-accent: #1f5fd6;           /* approx: focus ring */
+    --aho-radius: 4px;               /* kit: Border Radius/4 px */
+    --aho-card-radius: 4px;
+    --aho-font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --aho-sidebar-width: 248px;      /* kit: Navigation/Sidebar State=Full */
+    --aho-sidebar-collapsed: 64px;   /* kit: Navigation/Sidebar State=Minimized */
+    --aho-space-1: 4px;
+    --aho-space-2: 8px;
+    --aho-space-3: 12px;
+    --aho-space-4: 16px;
+    --aho-space-5: 24px;
+    --aho-space-6: 32px;
+    /* Status tints (approx, follow kit badge hues: green, blue, yellow, red, purple, grey) */
+    --aho-green-bg: #e8f6ee;  --aho-green-fg: #1a7f43;
+    --aho-blue-bg: #e9f0ff;   --aho-blue-fg: #1f5fd6;
+    --aho-yellow-bg: #fff6db; --aho-yellow-fg: #9a6700;
+    --aho-red-bg: #fdecec;    --aho-red-fg: #c4320a;
+    --aho-purple-bg: #f3edff; --aho-purple-fg: #6d3fd1;
+    --aho-grey-bg: #f2f2f2;   --aho-grey-fg: #4d4d4d;
+}
+
+body.aho-public {
+    color-scheme: light;
+    --bg: var(--aho-sidebar-bg);
+    --card: var(--aho-card);
+    --text: var(--aho-ink);
+    --muted: var(--aho-muted);
+    --accent: var(--aho-primary);
+    --me: var(--aho-primary-container);
+    --border: var(--aho-outline);
+    --rec: var(--aho-red-fg);
+    margin: 0;
+    font: 15px/1.6 var(--aho-font);
+    background: var(--bg);
+    color: var(--text);
+}
+.aho-public * { box-sizing: border-box; }
+.aho-public main { max-width: 800px; margin: 0 auto; padding: 32px 20px 56px; min-height: 100vh; display: flex; flex-direction: column; gap: 20px; }
+.aho-public .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--aho-card-radius); padding: 24px; box-shadow: none; }
+.aho-public .brand { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 650; color: var(--text); padding: 0 0 12px; }
+.aho-public .brand img { width: 36px; height: 36px; border-radius: 8px; }
+.aho-public h1 { font-size: 26px; font-weight: 650; line-height: 1.3; letter-spacing: -.025em; margin: 0 0 8px; }
+.aho-public h2 { font-size: 19px; font-weight: 600; line-height: 1.4; margin: 0 0 12px; }
+.aho-public p { margin: 0 0 12px; }
+.aho-public .muted { color: var(--muted); font-size: 14px; }
+.aho-public .step { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.aho-public button { min-height: 40px; padding: 9px 16px; border: 1px solid var(--accent); border-radius: var(--aho-radius); background: var(--accent); color: #fff; font: 500 14px/1.4 var(--aho-font); cursor: pointer; }
+.aho-public button:hover:not(:disabled) { background: var(--aho-primary-hover); }
+.aho-public button:disabled { opacity: .45; cursor: default; }
+.aho-public button.ghost { background: var(--card); color: var(--text); border-color: var(--border); }
+.aho-public button.ghost:hover:not(:disabled) { background: var(--me); border-color: #b5bac2; }
+.aho-public button.rec { background: var(--rec); border-color: var(--rec); }
+.aho-public textarea, .aho-public #answer-draft { border-radius: var(--aho-radius); font-family: var(--aho-font); }
+.aho-public :is(button, textarea, input):focus-visible { outline: 2px solid var(--aho-accent); outline-offset: 3px; }
+.aho-public input[type="checkbox"] { accent-color: var(--aho-primary); }
+@media (max-width: 520px) {
+    .aho-public main { padding: 20px 12px 32px; gap: 16px; }
+    .aho-public .card { padding: 20px; }
+    .aho-public h1 { font-size: 23px; }
+}

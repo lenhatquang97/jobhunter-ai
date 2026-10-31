@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="aho_recruitment_ui.MaterialSidebar" t-inherit="web.NavBar" t-inherit-mode="extension">
+        <xpath expr="//t[@t-call='web.NavBar.AppsMenu']" position="attributes">
+            <attribute name="t-if">this.currentApp?.xmlid !== 'hr_recruitment.menu_hr_recruitment_root'</attribute>
+        </xpath>
+        <xpath expr="//header[hasclass('o_navbar')]" position="attributes">
+            <attribute name="t-att-class">{'aho-sidebar-collapsed': this.state.ahoSidebarCollapsed and this.currentApp?.xmlid === 'hr_recruitment.menu_hr_recruitment_root'}</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('o_menu_systray')]" position="before">
+            <t t-if="this.currentApp?.xmlid === 'hr_recruitment.menu_hr_recruitment_root'">
+                <t t-set="jobMenu" t-value="this.findAhoMenu('hr_recruitment.menu_hr_job_position') || this.findAhoMenu('hr_recruitment.menu_hr_job_position_interviewer')"/>
+                <t t-set="setupMenus" t-value="['hr_recruitment.menu_hr_department', 'aho_recruitment_ui.menu_pipeline_setup', 'hr_recruitment.menu_hr_applicant_refuse_reason', 'aho_recruitment_ui.menu_company_ai_context', 'hr_recruitment.menu_hr_recruitment_global_settings'].map((x) => this.findAhoMenu(x))"/>
+                <div class="aho-sidebar-brand">
+                    <a t-att-href="jobMenu ? this.getMenuItemHref(jobMenu) : '/odoo'" class="aho-brand-link" aria-label="AI Hiring Operator">
+                        <img src="/aho_recruitment_ui/static/src/img/ai-hiring-operator.svg?v=3" alt="" width="28" height="28"/>
+                        <span class="aho-brand-copy">AI Hiring Operator</span>
+                    </a>
+                </div>
+                <button type="button" class="aho-sidebar-toggle" t-on-click="() => this.toggleAhoSidebar()"
+                        t-att-aria-expanded="!this.state.ahoSidebarCollapsed"
+                        t-att-aria-label="this.state.ahoSidebarCollapsed ? 'Mở thanh điều hướng' : 'Thu gọn thanh điều hướng'"
+                        t-att-title="this.state.ahoSidebarCollapsed ? 'Mở thanh điều hướng' : 'Thu gọn thanh điều hướng'">
+                    <i class="oi" t-att-data-icon="this.state.ahoSidebarCollapsed ? 'chevron_right' : 'chevron_left'" aria-hidden="true"/>
+                </button>
+                <nav class="aho-sidebar-menu" aria-label="Điều hướng tuyển dụng">
+                    <div class="aho-sidebar-group">
+                        <div class="aho-sidebar-section-label">Tuyển dụng</div>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="jobMenu" label="'Vị trí tuyển dụng'" icon="'work'"/>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="this.findAhoMenu('aho_recruitment_ui.menu_applicant_tracking')" label="'Ứng viên'" icon="'groups'"/>
+                    </div>
+                    <div class="aho-sidebar-group" t-if="setupMenus.some((menu) => !!menu)">
+                        <div class="aho-sidebar-section-label">Thiết lập</div>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[0]" label="'Phòng ban'" icon="'business'"/>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[1]" label="'Quy trình tuyển dụng'" icon="'view_kanban'"/>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[2]" label="'Lý do từ chối'" icon="'block'"/>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[3]" label="'Thông tin công ty cho AI'" icon="'business'"
+                           hint="'Sứ mệnh, sản phẩm, văn hoá. Agent phỏng vấn đọc nội dung này cùng JD và CV.'"/>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[4]" label="'Cài đặt'" icon="'tune'"/>
+                    </div>
+                </nav>
+            </t>
+        </xpath>
+    </t>
+
+    <t t-name="aho_recruitment_ui.MaterialSidebarEntry">
+        <a t-if="menu"
+           t-att-href="this.getMenuItemHref(menu)"
+           t-att-class="{'aho-sidebar-link': true, 'aho-active': this.isSidebarMenuActive(menu)}"
+           t-att-aria-current="this.isSidebarMenuActive(menu) ? 'page' : undefined"
+           t-att-data-menu-xmlid="menu.xmlid"
+           t-att-title="hint || label"
+           t-att-aria-label="label"
+           t-on-click.prevent="() => this._onMenuClicked(menu)">
+            <i class="oi" t-att-data-icon="icon" aria-hidden="true"/>
+            <span t-out="label"/>
+        </a>
+    </t>
+    <t t-name="aho_recruitment_ui.PipelineViewSwitcher" t-inherit="web.ControlPanel" t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('o_switch_view')]" position="inside">
+            <span t-if="this.env.searchModel?.context?.aho_pipeline and ['kanban', 'list'].includes(view.type)" class="ms-1">
+                <t t-out="view.type === 'kanban' ? 'Thẻ' : 'Danh sách'"/>
+            </span>
+        </xpath>
+        <xpath expr="//button[hasclass('o_switch_view')]" position="attributes">
+            <attribute name="t-att-data-tooltip">this.env.searchModel?.context?.aho_pipeline and ['kanban', 'list'].includes(view.type) ? (view.type === 'kanban' ? 'Thẻ' : 'Danh sách') : view.name</attribute>
+            <attribute name="t-att-aria-label">this.env.searchModel?.context?.aho_pipeline and ['kanban', 'list'].includes(view.type) ? (view.type === 'kanban' ? 'Thẻ' : 'Danh sách') : view.name + ' View'</attribute>
+        </xpath>
+    </t>
+</templates>

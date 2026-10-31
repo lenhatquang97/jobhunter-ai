@@ -21,6 +21,7 @@ services:
       PASSWORD: ${JOBHUNTER_LOCAL_ODOO_PASSWORD:-panel-local-only}
       JOBHUNTER_API_URL: http://api:8000
       JOBHUNTER_BRIDGE_SECRET: ${JOBHUNTER_BRIDGE_SECRET:-panel-local-bridge-only}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-${JOBHUNTER_OPENAI_API_KEY:-}}
     ports: ['127.0.0.1:${JOBHUNTER_ODOO_PORT:-8069}:8069']
     volumes:
       - ./odoo/addons/t10_jobhunter_chat:/mnt/extra-addons/t10_jobhunter_chat:ro

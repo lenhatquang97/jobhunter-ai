@@ -8,16 +8,24 @@ from pathlib import Path
 from typing import Literal
 
 import httpx
+from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from . import agent, assemblyai_demo, copilot, interview_specialist, schedule_agent, schedule_store
+from . import (
+    agent,
+    assemblyai_demo,
+    copilot,
+    interview_specialist,
+    report_agent,
+    schedule_agent,
+    schedule_store,
+)
 from . import interview_store as store
-from .schedule_provider import SeaPostgresScheduleProvider, ScheduleProviderError
+from .schedule_provider import ScheduleProviderError, SeaPostgresScheduleProvider
 
 _logger = logging.getLogger(__name__)
 
@@ -137,6 +145,16 @@ def retry_report(id_: int, tasks: BackgroundTasks):
 def interview_agent_handoff(body: interview_specialist.InterviewAssignment):
     """Stable specialist boundary for a future orchestrator; never starts work implicitly."""
     return interview_specialist.run_interview_assignment(body, store.get)
+
+
+@app.post(
+    '/api/agents/report',
+    response_model=report_agent.ReportResponse,
+    dependencies=[Depends(recruiter)],
+)
+def report_agent_handoff(body: report_agent.ReportRequest):
+    """Compile validated branch handoffs without business writes or decisions."""
+    return report_agent.ReportService().execute(body)
 
 
 @app.post(

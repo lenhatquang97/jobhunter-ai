@@ -63,7 +63,8 @@ test('rewrites upstream redirects and preserves separate secure cookies', async 
 test('blocks management and development paths before reaching the origin', async () => {
   globalThis.fetch = () => { throw new Error('unexpected upstream'); };
   for (const path of ['/web/database/manager','/web/%64atabase/backup',
-    '/web/tests','/web/assets/debug/test.js','/odoo?debug=assets']) {
+    '/web/tests','/web/assets/debug/test.js','/odoo?debug=assets',
+    '/xmlrpc/db','/xmlrpc/2/db','/jsonrpc']) {
     assert.equal((await worker.fetch(request(path), env)).status, 403, path);
   }
 });

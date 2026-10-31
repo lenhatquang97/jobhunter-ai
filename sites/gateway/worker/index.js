@@ -23,6 +23,7 @@ export default {
     try { path = decodeURIComponent(incoming.pathname).toLowerCase(); }
     catch { return new Response('Invalid path', {status:400}); }
     if (/^\/web\/(database|tests|qunit)(\/|$)/.test(path)
+      || /^\/(xmlrpc|jsonrpc)(\/|$)/.test(path)
       || /^\/web\/assets\/debug(\/|$)/.test(path)
       || incoming.searchParams.has('debug')) {
       return new Response('This route is disabled.', {status:403,headers:{'cache-control':'private, no-store'}});

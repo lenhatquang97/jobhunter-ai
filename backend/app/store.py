@@ -166,8 +166,10 @@ class RunWorkflow(Base):
 
 
 class Store:
-    def __init__(self, url):
-        self.engine = create_async_engine(url, echo=False, hide_parameters=True)
+    def __init__(self, url, connect_args=None):
+        self.engine = create_async_engine(
+            url, echo=False, hide_parameters=True, connect_args=connect_args or {}
+        )
         self.session = async_sessionmaker(self.engine, expire_on_commit=False)
 
     async def initialize(self):

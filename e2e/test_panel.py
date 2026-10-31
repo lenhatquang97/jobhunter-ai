@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import time
 from pathlib import Path
 
 from playwright.sync_api import expect
@@ -10,14 +11,24 @@ from playwright.sync_api import expect
 BASE = os.getenv("JOBHUNTER_PANEL_URL", "http://localhost:28069")
 ARTIFACTS = Path(os.getenv("JOBHUNTER_PANEL_ARTIFACTS", ".state/evidence/panel"))
 ARTIFACTS.mkdir(parents=True, exist_ok=True)
+VIDEO_TIMELINE = []
+
+
+def video_checkpoint(name):
+    if os.getenv("JOBHUNTER_PANEL_VIDEO"):
+        VIDEO_TIMELINE.append({"name": name, "time": time.monotonic()})
 
 
 def login(page):
     page.set_viewport_size({"width": 1440, "height": 960})
-    page.goto(BASE + "/odoo/action-271?debug=assets")
+    page.goto(BASE + os.getenv("JOBHUNTER_PANEL_PATH", "/odoo/recruitment-applications"))
     if "/web/login" in page.url:
-        page.get_by_role("textbox", name="Email", exact=True).fill("workflow.qa1")
-        page.get_by_role("textbox", name="Password", exact=True).fill("workflow-test-only")
+        page.get_by_role("textbox", name="Email", exact=True).fill(
+            os.getenv("JOBHUNTER_PANEL_LOGIN", "workflow.qa1")
+        )
+        page.get_by_role("textbox", name="Password", exact=True).fill(
+            os.getenv("JOBHUNTER_PANEL_PASSWORD", "workflow-test-only")
+        )
         page.get_by_role("button", name="Log in", exact=True).click()
     expect(page.get_by_role("region", name="Jobhunter Chat")).to_be_visible(timeout=45000)
     window = page.get_by_role("button", name="Close Chat Window (ESC)", exact=True)
@@ -38,9 +49,10 @@ def wait_answer(panel, number):
 
 
 def test_filter_direct_typed_interview_and_summary(browser, page):
+    video_checkpoint("recruiter_start")
     panel = login(page)
     panel.get_by_role("button", name="New chat", exact=True).click()
-    page.get_by_role("link").filter(has_text="E2E Alex Software Engineer").first.click()
+    page.get_by_text("E2E Alex Software Engineer", exact=True).first.click()
     expect(
         page.get_by_role("heading", name="E2E Alex Software Engineer", exact=True)
     ).to_be_visible()
@@ -96,9 +108,16 @@ def test_filter_direct_typed_interview_and_summary(browser, page):
     expect(panel.locator(".jh-answer")).to_have_count(2, timeout=30000)
     panel.get_by_role("button", name="Close history", exact=True).click()
     workflow.get_by_role("button", name="Recover private interview link", exact=True).click()
-    expect(link).to_have_attribute("href", url)
+    expect(link).to_have_attribute("href", url, timeout=20000)
 
-    candidate_context = browser.new_context(viewport={"width": 1000, "height": 850})
+    video_checkpoint("candidate_start")
+    candidate_options = {"viewport": {"width": 1000, "height": 850}}
+    if os.getenv("JOBHUNTER_PANEL_VIDEO"):
+        candidate_options.update(
+            record_video_dir=str(ARTIFACTS / "candidate-video"),
+            record_video_size={"width": 1000, "height": 850},
+        )
+    candidate_context = browser.new_context(**candidate_options)
     candidate = candidate_context.new_page()
     try:
         candidate.goto(BASE + url)
@@ -122,6 +141,7 @@ def test_filter_direct_typed_interview_and_summary(browser, page):
         expect(candidate.locator("#progress")).to_contain_text("completed")
     finally:
         candidate_context.close()
+    video_checkpoint("candidate_end")
     workflow.get_by_role("button", name="Summarize evidence", exact=True).click()
     wait_answer(panel, 3)
     panel.get_by_role("button", name=re.compile("Worked for")).last.click()
@@ -130,6 +150,7 @@ def test_filter_direct_typed_interview_and_summary(browser, page):
         re.compile("self.report|submitted|candidate", re.I)
     )
     page.screenshot(path=str(ARTIFACTS / "final-summary.png"))
+    video_checkpoint("recruiter_end")
     evidence = {
         "provider_mode": os.getenv("JOBHUNTER_PANEL_PROVIDER_MODE", "deterministic"),
         "filter": True,
@@ -145,7 +166,7 @@ def test_panel_preserves_draft_and_candidate_focus_across_native_navigation(page
     panel.get_by_role("button", name="New chat", exact=True).click()
     composer = panel.get_by_role("textbox", name="Message Jobhunter")
     composer.fill("Unsent recruiting question")
-    page.get_by_role("link").filter(has_text="E2E Blake Software Engineer").first.click()
+    page.get_by_text("E2E Blake Software Engineer", exact=True).first.click()
     expect(
         page.get_by_role("heading", name="E2E Blake Software Engineer", exact=True)
     ).to_be_visible()

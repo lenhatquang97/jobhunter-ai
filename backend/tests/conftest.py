@@ -91,6 +91,7 @@ async def make_client(tmp_path):
     async def factory(provider=None, bridge=None, adapters=None, **overrides):
         settings = Settings(
             _env_file=None,
+            agent_adapters="",
             database_url=f"sqlite+aiosqlite:///{tmp_path / (str(uuid4()) + '.db')}",
             bridge_secret="test-bridge-secret",
             allow_sqlite=True,

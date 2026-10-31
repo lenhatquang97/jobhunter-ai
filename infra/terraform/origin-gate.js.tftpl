@@ -1,0 +1,14 @@
+var crypto = require('crypto');
+function handler(event) {
+  var request = event.request;
+  var token = request.headers['x-jobhunter-origin-token'];
+  if (!token || crypto.createHash('sha256').update(token.value).digest('hex') !== '${token_hash}') {
+    return {statusCode:403,statusDescription:'Forbidden',headers:{'cache-control':{value:'no-store'}}};
+  }
+  delete request.headers['x-jobhunter-origin-token'];
+  var uri = request.uri.toLowerCase();
+  if (uri.indexOf('/web/database') === 0 || uri.indexOf('/web/tests') === 0 || uri.indexOf('/web/debug') === 0 || uri.indexOf('/web/assets/debug') === 0 || /^\/(xmlrpc|jsonrpc)(\/|$)/.test(uri) || request.querystring.debug) {
+    return {statusCode:404,statusDescription:'Not Found',headers:{'cache-control':{value:'no-store'}}};
+  }
+  return request;
+}

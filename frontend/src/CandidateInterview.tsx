@@ -27,8 +27,18 @@ export function CandidateInterview({ token }: { token: string }) {
   const stream = React.useRef<MediaStream | null>(null);
   const dataChannel = React.useRef<RTCDataChannel | null>(null);
   const remoteAudio = React.useRef<HTMLAudioElement | null>(null);
+  const draftRef = React.useRef(draft);
+  const busyRef = React.useRef(false);
+  const speakingRef = React.useRef(false);
+  const silenceTimer = React.useRef<number | null>(null);
+
+  const clearSilenceTimer = React.useCallback(() => {
+    if (silenceTimer.current !== null) window.clearTimeout(silenceTimer.current);
+    silenceTimer.current = null;
+  }, []);
 
   const closeVoice = React.useCallback(() => {
+    clearSilenceTimer(); speakingRef.current = false;
     dataChannel.current?.close(); dataChannel.current = null;
     peer.current?.close(); peer.current = null;
     stream.current?.getTracks().forEach((track) => track.stop()); stream.current = null;
@@ -37,7 +47,7 @@ export function CandidateInterview({ token }: { token: string }) {
       remoteAudio.current.srcObject = null;
     }
     setVoiceStatus("Enable English voice");
-  }, []);
+  }, [clearSilenceTimer]);
 
   React.useEffect(() => {
     void api<Page>(`/api/i/${token}`).then((result) => {
@@ -50,16 +60,18 @@ export function CandidateInterview({ token }: { token: string }) {
   }, [token, closeVoice]);
 
   React.useEffect(() => {
+    draftRef.current = draft;
     if (draft) localStorage.setItem(draftKey, draft); else localStorage.removeItem(draftKey);
   }, [draft, draftKey]);
 
   React.useEffect(() => {
     if (!question || !dataChannel.current || dataChannel.current.readyState !== "open") return;
+    clearSilenceTimer(); speakingRef.current = true; setVoiceStatus("AI is speaking…");
     dataChannel.current.send(JSON.stringify({
       type: "response.create",
       response: { conversation: "none", input: [], output_modalities: ["audio"], instructions: `Read this English interview question exactly as written and add nothing: ${question}` },
     }));
-  }, [question]);
+  }, [question, clearSilenceTimer]);
 
   const start = async () => {
     setBusy(true); setError("");
@@ -70,18 +82,21 @@ export function CandidateInterview({ token }: { token: string }) {
     } catch (reason) { setError(String(reason)); } finally { setBusy(false); }
   };
 
-  const submit = async () => {
-    if (!draft.trim()) return;
-    setBusy(true); setError("");
+  const submit = async (textOverride?: string) => {
+    const text = (textOverride ?? draftRef.current).trim();
+    if (!text || busyRef.current) return;
+    clearSilenceTimer(); busyRef.current = true; setBusy(true); setError("");
     try {
       const result = await api<Turn>(`/api/i/${token}/answer`, {
-        method: "POST", body: JSON.stringify({ text: draft, language: answerLanguage }),
+        method: "POST", body: JSON.stringify({ text, language: textOverride ? "en" : answerLanguage }),
       });
       if (result.error) throw new Error(result.detail || result.error);
       if (result.submitted_turn) setSubmittedTurns((current) => [...current, result.submitted_turn!]);
-      setDraft(""); setQuestion(result.question || ""); setDone(Boolean(result.done));
+      draftRef.current = ""; setDraft(""); setQuestion(result.question || ""); setDone(Boolean(result.done));
       if (result.done) closeVoice();
-    } catch (reason) { setError(String(reason)); } finally { setBusy(false); }
+    } catch (reason) {
+      setError(String(reason)); setVoiceStatus("Auto-submit failed — use Submit answer");
+    } finally { busyRef.current = false; setBusy(false); }
   };
 
   const changeConsent = async (consent: boolean) => {
@@ -115,9 +130,17 @@ export function CandidateInterview({ token }: { token: string }) {
       const dc = pc.createDataChannel("oai-events"); dataChannel.current = dc;
       dc.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        if (message.type === "conversation.item.input_audio_transcription.completed") {
-          setDraft((current) => `${current} ${message.transcript || ""}`.trim());
-          setAnswerLanguage("en"); setVoiceStatus("Transcript draft ready — review before submitting");
+        if (message.type === "output_audio_buffer.started") {
+          clearSilenceTimer(); speakingRef.current = true; setVoiceStatus("AI is speaking…");
+        } else if (message.type === "output_audio_buffer.stopped" || message.type === "output_audio_buffer.cleared") {
+          speakingRef.current = false; setVoiceStatus("Listening — auto-submit after 3.5 seconds of silence");
+        } else if (message.type === "conversation.item.input_audio_transcription.completed" && !speakingRef.current && !busyRef.current) {
+          const nextDraft = `${draftRef.current} ${message.transcript || ""}`.trim();
+          if (!nextDraft) return;
+          draftRef.current = nextDraft; setDraft(nextDraft); setAnswerLanguage("en");
+          clearSilenceTimer();
+          silenceTimer.current = window.setTimeout(() => void submit(nextDraft), 3500);
+          setVoiceStatus("Answer captured — auto-submitting after pause");
         } else if (message.type === "error") {
           setError(`Voice provider error: ${message.error?.message || "unknown error"}`);
         }
@@ -130,8 +153,9 @@ export function CandidateInterview({ token }: { token: string }) {
       if (!sdp.ok) throw new Error("Voice provider connection failed");
       await pc.setRemoteDescription({ type: "answer", sdp: await sdp.text() });
       await new Promise<void>((resolve) => dc.readyState === "open" ? resolve() : dc.addEventListener("open", () => resolve(), { once: true }));
+      speakingRef.current = true;
       dc.send(JSON.stringify({ type: "response.create", response: { conversation: "none", input: [], output_modalities: ["audio"], instructions: `Read this English interview question exactly as written and add nothing: ${question}` } }));
-      setVoiceStatus("Listening — transcript stays a draft until Submit");
+      setVoiceStatus("AI is speaking…");
     } catch (reason) {
       closeVoice(); setError(String(reason));
       await api(`/api/i/${token}/consent`, { method: "POST", body: JSON.stringify({ consent: false }) }).catch(() => undefined);
@@ -152,7 +176,7 @@ export function CandidateInterview({ token }: { token: string }) {
     <section className="candidate-card brand"><p className="eyebrow">AI screening interview</p><h1>{page.job}</h1><p className="muted">{page.company}</p></section>
     {!started ? <section className="candidate-card">
       <h2>Before you begin</h2>
-      <p>You can answer in English or Vietnamese by typing. Voice is optional and English-only. Every transcript remains an editable draft until you press Submit answer.</p>
+      <p>You can answer in English or Vietnamese by typing. Voice is optional and English-only. Voice answers auto-submit after 3.5 seconds of silence; Submit answer remains available as a backup.</p>
       <button className="primary" onClick={() => void start()} disabled={busy}>Start screening</button>
     </section> : <section className="candidate-card interview-stage">
       {done ? <><span className="orb done" /><h2>Thank you — the interview is complete.</h2></> : <>
@@ -161,8 +185,8 @@ export function CandidateInterview({ token }: { token: string }) {
         <button onClick={() => void enableVoice()} disabled={!audioConsent || busy}>{voiceStatus}</button>
         <label>Answer language<select value={answerLanguage} onChange={(event) => setAnswerLanguage(event.target.value as "en" | "vi")}><option value="en">English</option><option value="vi">Tiếng Việt</option></select></label>
         <label>Your answer draft<textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={7} placeholder="Type in English or Vietnamese, or enable English voice transcription." /></label>
-        <p className="muted">Review and edit this draft. It is not evidence and will not advance the interview until you submit it.</p>
-        <div className="actions"><button className="primary" onClick={() => void submit()} disabled={busy || !draft.trim()}>Submit answer</button><button className="danger" onClick={() => void cancel()}>End interview</button></div>
+        <p className="muted">Voice drafts auto-submit after a pause. Typed answers advance only when submitted.</p>
+        <div className="actions"><button className="primary" onClick={() => void submit()} disabled={busy || !draft.trim()}>Submit answer (backup)</button><button className="danger" onClick={() => void cancel()}>End interview</button></div>
       </>}
       {error && <p className="error" role="alert">{error}</p>}
     </section>}

@@ -29,6 +29,15 @@ export function RecruiterScreening() {
     event.preventDefault(); setBusy(true); setError("");
     try {
       const form = new FormData(event.currentTarget);
+      const companyContext = String(form.get("company_background") || "").trim();
+      const jobDescription = String(form.get("job_description") || "").trim();
+      const cv = form.get("cv");
+      const cvName = cv instanceof File ? cv.name.replace(/\.[^.]+$/, "") : "Test Candidate";
+      form.set("candidate", cvName || "Test Candidate");
+      form.set("company", companyContext.split(/\r?\n/)[0].slice(0, 120) || "Test Company");
+      form.set("job", jobDescription.split(/\r?\n/)[0].slice(0, 120) || "Open role");
+      form.set("max_topics", "7");
+      form.set("max_probes", "1");
       await api<Session>("/api/interviews", { method: "POST", body: form, recruiterToken: token });
       event.currentTarget.reset(); await load();
     } catch (reason) { setError(String(reason)); } finally { setBusy(false); }
@@ -61,15 +70,9 @@ export function RecruiterScreening() {
         {error && <p className="error" role="alert">{error}</p>}
       </section>
       <form className="panel form-grid" onSubmit={create}>
-        <label>Candidate name<input name="candidate" required /></label>
-        <label>Role<input name="job" required /></label>
-        <label>Company<input name="company" required /></label>
-        <label className="wide">Company interview context<textarea name="company_background" required minLength={20} placeholder="Products and mission; team and ways of working; salary band; onsite/hybrid/remote arrangement; location; benefits or policies; hiring process." /><small className="muted">Only include facts the screening agent may explain or compare with the candidate's expectations.</small></label>
-        <label className="wide">Job description<textarea name="job_description" required minLength={20} placeholder="Role purpose, responsibilities, team and day-to-day work." /></label>
-        <label className="wide">Job requirements / must-haves<textarea name="job_requirements" placeholder="Required experience, skills, qualifications, language, location or availability constraints." /><small className="muted">The agent asks light questions grounded in the JD and must-haves, not a technical deep-dive.</small></label>
-        <label className="wide">CV (PDF/TXT)<input name="cv" type="file" accept=".pdf,.txt" /></label>
-        <label className="wide">Or paste CV text<textarea name="cv_plain" minLength={20} /></label>
-        <div className="row wide"><label>Topics<input name="max_topics" type="number" min="1" max="12" defaultValue="7" /></label><label>Follow-ups per topic<input name="max_probes" type="number" min="0" max="6" defaultValue="1" /></label></div>
+        <label className="wide">Company<textarea name="company_background" required minLength={20} placeholder="First line: company name. Then add salary range, work arrangement, location, process and company background." /></label>
+        <label className="wide">JD<textarea name="job_description" required minLength={20} placeholder="First line: role name. Then add responsibilities and must-have requirements." /></label>
+        <label className="wide">Upload CV<input name="cv" type="file" accept=".pdf,.txt" required /></label>
         <button className="primary wide" disabled={busy || !token}>{busy ? "Working…" : "Create interview link"}</button>
       </form>
       <section className="panel sessions">

@@ -1,5 +1,28 @@
 # Jobhunter Chat AI service
 
+## Standalone interview flows
+
+The migrated quick-screening and human-interview assistant remain runnable as an
+isolated feature app while the orchestrated Odoo chat service stays unchanged.
+Start the API with `PYTHONPATH=backend uvicorn app.standalone:app --port 8000`
+and the React/Vite UI with `npm --prefix frontend run dev`. The feature app uses
+the `RECRUITER_TOKEN`, provider keys, and interview settings documented in
+`.env.example`. This standalone entry point is not yet dispatched by the main
+Orchestrator.
+
+The same standalone API also exposes the Schedule test flow under
+`/api/agents/schedule`. It supports dry-run invitations, candidate responses,
+optional Google FreeBusy checks, and explicitly enabled SMTP test delivery.
+Its state is separate from the orchestrated Odoo chat flow and its settings are
+listed in `.env.example`.
+
+The standalone harness-compatible Report Agent is exposed at
+`/api/agents/report`. It is adapted from `feat/rag-hr-screening` commit
+`d60edba`, preserves supplied findings, gaps, limitations and artifact
+references, and keeps report compilation status separate from overall workflow
+status. It rejects scoring, ranking and hiring-decision fields and does not
+write to Odoo or dispatch the Orchestrator.
+
 Native Odoo Recruitment with a separate **Jobhunter AI** chat panel on the right. The Python orchestrator calls migrated Filter, Interview and Report adapters through the shared Responses gateway. Odoo owns identity, company scope, permissions, source freshness, and private workflow artifacts. This is our own AI layer; it does not route through OdooBot.
 
 The addon is now owned here at `odoo/addons/t10_jobhunter_chat`. Both original RAG addons are copied alongside it as migration references with source revisions/checksums in `odoo/imports.json`; they are not mounted or installed. Active adapted specialists live in `backend/app/agents` and do not rank candidates, score suitability, recommend hiring decisions, change stages, or call legacy recruiting automation.

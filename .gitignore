@@ -14,5 +14,7 @@ htmlcov/
 .superpowers/
 .state/
 node_modules/
+dist/
+*.tsbuildinfo
 test-results/
 .playwright-mcp/

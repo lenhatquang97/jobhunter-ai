@@ -1,0 +1,187 @@
+[
+  {
+    "speaker": "techlead",
+    "text": "Hi, thanks for coming in today. How are you doing?",
+    "start_sec": 0.0
+  },
+  {
+    "speaker": "candidate",
+    "text": "Hi! I'm doing well, thank you. Excited to be here and talk about the backend engineer role.",
+    "start_sec": 4.45
+  },
+  {
+    "speaker": "techlead",
+    "text": "Great to hear! So, before we dive into the technical stuff, can you tell me a little about yourself and your background?",
+    "start_sec": 11.5
+  },
+  {
+    "speaker": "candidate",
+    "text": "Sure! I recently graduated with a degree in computer science. During my studies, I did an internship where I worked on a small web app backend using Python and FastAPI.",
+    "start_sec": 19.35
+  },
+  {
+    "speaker": "techlead",
+    "text": "That's a solid start. What made you interested in backend development specifically?",
+    "start_sec": 32.25
+  },
+  {
+    "speaker": "candidate",
+    "text": "I enjoy working with data and logic behind the scenes. I like how backend connects the frontend with databases and handles the core functionality.",
+    "start_sec": 38.6
+  },
+  {
+    "speaker": "techlead",
+    "text": "Makes sense. Let's talk Python a bit. Can you explain what a Python dictionary is and give a simple example?",
+    "start_sec": 48.45
+  },
+  {
+    "speaker": "candidate",
+    "text": "A dictionary is a collection of key-value pairs. For example, I used a dictionary to store user info like {'name': 'Alice', 'age': 25} in my internship project.",
+    "start_sec": 55.7
+  },
+  {
+    "speaker": "techlead",
+    "text": "Good. How do you access a value in a dictionary?",
+    "start_sec": 67.35
+  },
+  {
+    "speaker": "candidate",
+    "text": "You use the key inside square brackets, like dict['name'] to get 'Alice'.",
+    "start_sec": 71.85
+  },
+  {
+    "speaker": "techlead",
+    "text": "Right. What happens if you try to access a key that doesn't exist?",
+    "start_sec": 77.4
+  },
+  {
+    "speaker": "candidate",
+    "text": "It raises a KeyError. To avoid that, I sometimes use the get() method which returns None or a default value if the key is missing.",
+    "start_sec": 83.4
+  },
+  {
+    "speaker": "techlead",
+    "text": "Exactly. Now, you mentioned FastAPI. Can you briefly describe what FastAPI is used for?",
+    "start_sec": 91.95
+  },
+  {
+    "speaker": "candidate",
+    "text": "FastAPI is a Python web framework to build APIs quickly. I used it to create REST endpoints for my project.",
+    "start_sec": 100.2
+  },
+  {
+    "speaker": "techlead",
+    "text": "Nice. What HTTP methods have you worked with in your APIs?",
+    "start_sec": 108.95
+  },
+  {
+    "speaker": "candidate",
+    "text": "Mostly GET to retrieve data and POST to create new records.",
+    "start_sec": 114.95
+  },
+  {
+    "speaker": "techlead",
+    "text": "Good. Can you explain the difference between GET and POST?",
+    "start_sec": 120.15
+  },
+  {
+    "speaker": "candidate",
+    "text": "GET requests data from the server and should not change anything. POST sends data to the server to create or update resources.",
+    "start_sec": 125.25
+  },
+  {
+    "speaker": "techlead",
+    "text": "Exactly. What HTTP status codes do you usually return for successful GET and POST requests?",
+    "start_sec": 134.3
+  },
+  {
+    "speaker": "candidate",
+    "text": "For GET, usually 200 OK. For POST, 201 Created if a new resource is made.",
+    "start_sec": 141.5
+  },
+  {
+    "speaker": "techlead",
+    "text": "Great. Let's switch to SQL. Can you explain what a JOIN is in SQL?",
+    "start_sec": 148.95
+  },
+  {
+    "speaker": "candidate",
+    "text": "A JOIN combines rows from two or more tables based on related columns. For example, joining users and orders tables on user_id.",
+    "start_sec": 155.4
+  },
+  {
+    "speaker": "techlead",
+    "text": "Good example. What types of JOINs do you know?",
+    "start_sec": 165.3
+  },
+  {
+    "speaker": "candidate",
+    "text": "I know INNER JOIN, which returns matching rows, and LEFT JOIN, which returns all rows from the left table and matching from the right.",
+    "start_sec": 170.35
+  },
+  {
+    "speaker": "techlead",
+    "text": "Perfect. Have you worked with indexes in databases?",
+    "start_sec": 178.9
+  },
+  {
+    "speaker": "candidate",
+    "text": "I learned that indexes speed up queries by allowing faster lookups on columns, like indexing user_id to quickly find users.",
+    "start_sec": 183.85
+  },
+  {
+    "speaker": "techlead",
+    "text": "Exactly. Lastly, how comfortable are you with Git?",
+    "start_sec": 194.55
+  },
+  {
+    "speaker": "candidate",
+    "text": "I used Git for version control during my internship. I know how to clone repos, commit changes, push, and create branches.",
+    "start_sec": 199.45
+  },
+  {
+    "speaker": "techlead",
+    "text": "Good to hear. Have you ever resolved merge conflicts?",
+    "start_sec": 208.4
+  },
+  {
+    "speaker": "candidate",
+    "text": "Yes, once. I carefully reviewed conflicting files and manually merged changes before committing.",
+    "start_sec": 212.65
+  },
+  {
+    "speaker": "techlead",
+    "text": "That's important. Do you have any questions for me about the team or role?",
+    "start_sec": 220.0
+  },
+  {
+    "speaker": "candidate",
+    "text": "Yes, could you tell me more about the team I'll be working with and the projects I'll contribute to?",
+    "start_sec": 225.3
+  },
+  {
+    "speaker": "techlead",
+    "text": "Sure! Our backend team is small but collaborative, working mainly on APIs for our mobile app. You'll get to work closely with frontend and QA engineers.",
+    "start_sec": 231.65
+  },
+  {
+    "speaker": "candidate",
+    "text": "That sounds great. What are the next steps in the hiring process?",
+    "start_sec": 243.45
+  },
+  {
+    "speaker": "techlead",
+    "text": "We'll review all candidates and get back to you within a week. If all goes well, there will be a technical assignment next.",
+    "start_sec": 249.05
+  },
+  {
+    "speaker": "candidate",
+    "text": "Thank you for the info and the interview. I look forward to hearing from you.",
+    "start_sec": 257.75
+  },
+  {
+    "speaker": "techlead",
+    "text": "Thank you for coming. Have a great day!",
+    "start_sec": 263.35
+  }
+]

@@ -39,7 +39,10 @@ class HrApplicant(models.Model):
     def _rag_cv_text(self):
         """CV text from the newest attachment. attachment_indexation (a hr_recruitment dependency) already
         extracted text from PDF / DOCX / XLSX into index_content."""
-        for att in self.attachment_ids.sorted('id', reverse=True):
+        attachments = self.attachment_ids
+        if 'cv_attachment_ids' in self._fields:
+            attachments |= self.cv_attachment_ids
+        for att in attachments.sorted('id', reverse=True):
             text = (att.sudo().index_content or '').strip()
             if not text and att.mimetype == 'application/pdf':
                 try:

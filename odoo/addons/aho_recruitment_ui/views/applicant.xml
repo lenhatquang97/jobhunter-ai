@@ -92,6 +92,10 @@
             <xpath expr="//button[@name='action_talent_pool_add_applicants']" position="attributes"><attribute name="string">Thêm vào kho ứng viên</attribute></xpath>
             <xpath expr="//notebook" position="before"><div class="alert alert-info" role="status" groups="hr_recruitment.group_hr_recruitment_user"><strong>Việc tiếp theo: </strong><field name="aho_next_action" readonly="1" class="d-inline"/></div></xpath>
             <xpath expr="//notebook" position="inside">
+                <page string="CV" name="aho_cv_documents" groups="hr_recruitment.group_hr_recruitment_user">
+                    <p class="text-muted">Upload the candidate CV here. Filter, Interview and Report agents use these files together with the job description and company context.</p>
+                    <field name="cv_attachment_ids" widget="many2many_binary" options="{'accepted_file_extensions': '.pdf,.doc,.docx,.txt'}"/>
+                </page>
                 <page string="Phỏng vấn tự động" groups="hr_recruitment.group_hr_recruitment_user">
                     <p class="text-muted">Ứng viên trả lời bằng giọng nói qua link, AI hỏi theo JD và CV rồi viết báo cáo. Điểm và gợi ý chỉ để tham khảo; HR đọc bằng chứng trong báo cáo trước khi quyết định.</p>
                     <p class="text-muted fst-italic" invisible="rag_interview_ids">Chưa có phiên phỏng vấn tự động cho hồ sơ này.</p>

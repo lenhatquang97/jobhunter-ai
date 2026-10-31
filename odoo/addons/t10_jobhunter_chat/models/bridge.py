@@ -11,7 +11,7 @@ from odoo.tools.misc import hash_sign, verify_hash_signed
 
 WORKFLOW_TOOLS = ('workflow_context', 'workflow_save', 'workflow_schedule', 'workflow_prepare', 'workflow_prepare_direct')
 WORKFLOW_MODELS = ('jobhunter.chat.case', 'jobhunter.chat.artifact', 'jobhunter.chat.answer')
-TOOLS = ('search_jobs', 'get_job', 'search_applicants', 'get_applicant', 'list_documents', 'read_document')
+TOOLS = ('search_jobs', 'get_job', 'search_applicants', 'get_applicant', 'list_documents', 'read_document', 'create_job')
 FIELDS = {
     'hr.job': ('id', 'name', 'active', 'description', 'requirements', 'department_id', 'company_id', 'write_date'),
     'hr.applicant': ('id', 'partner_name', 'job_id', 'stage_id', 'active', 'company_id', 'create_date', 'write_date'),
@@ -216,10 +216,43 @@ class ChatBridge(models.AbstractModel):
                 return self._workflow_execute(operation, arguments, refs)
             shapes = {'search_jobs': ('query', 'limit'), 'get_job': ('job_id',),
                       'search_applicants': ('query', 'job_id', 'limit'), 'get_applicant': ('applicant_id',),
-                      'list_documents': ('model', 'record_id'), 'read_document': ('attachment_id',)}
+                      'list_documents': ('model', 'record_id'), 'read_document': ('attachment_id',),
+                      'create_job': ('name', 'department_name', 'number_of_recruitment', 'description', 'requirements')}
             if operation not in shapes:
                 raise ValidationError('Unknown operation.')
             strict(arguments, shapes[operation])
+            if operation == 'create_job':
+                name = arguments['name'].strip()
+                department_name = arguments['department_name']
+                description = arguments['description'].strip()
+                requirements = arguments['requirements'].strip()
+                count = arguments['number_of_recruitment']
+                if not name or len(name) > 300 or not isinstance(count, int) or not 1 <= count <= 1000:
+                    raise ValidationError('Invalid job fields.')
+                for value in (department_name, description, requirements):
+                    if value is not None and not isinstance(value, str):
+                        raise ValidationError('Invalid job fields.')
+                company = self.env.company
+                department = self.env['hr.department']
+                department_id = False
+                if department_name and department_name.strip():
+                    department = department.search([
+                        ('name', '=ilike', department_name.strip()),
+                        '|', ('company_id', '=', company.id), ('company_id', '=', False),
+                    ], limit=1)
+                    if not department:
+                        raise ValidationError('Needs input: the requested department does not exist.')
+                    department_id = department.id
+                job = self.env['hr.job'].create({
+                    'name': name,
+                    'company_id': company.id,
+                    'department_id': department_id,
+                    'no_of_recruitment': count,
+                    'description': description,
+                    'requirements': requirements,
+                })
+                values = self._values(job, FIELDS['hr.job'])
+                return {'ok': True, 'data': {'job': values}, 'sources': []}
             for key in ('job_id', 'applicant_id', 'record_id', 'attachment_id'):
                 if key in arguments and not (key == 'job_id' and operation == 'search_applicants' and arguments[key] is None):
                     positive(arguments[key])

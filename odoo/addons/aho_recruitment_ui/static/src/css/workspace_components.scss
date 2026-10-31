@@ -77,6 +77,18 @@ body:has(.aho-sidebar-brand) {
             border-radius: var(--aho-radius);
             background: var(--aho-card);
             box-shadow: none;
+            overflow: hidden;
+        }
+        .o_searchview:focus-within {
+            border: 1px solid var(--aho-outline) !important;
+            box-shadow: none !important;
+        }
+        .o_searchview input,
+        .o_searchview .o_searchview_input,
+        .o_searchview .o_input {
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
         }
         .o_form_view .o_form_sheet {
             border: 1px solid var(--aho-outline);

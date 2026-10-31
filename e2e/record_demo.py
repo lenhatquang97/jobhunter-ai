@@ -34,11 +34,32 @@ def main():
         )
         started = time.monotonic()
         page = context.new_page()
+        rpc_summary = []
+
+        def observe(response):
+            if response.request.url.endswith("/jobhunter/chat/rpc"):
+                try:
+                    request = response.request.post_data_json["params"]
+                    result = response.json().get("result", {})
+                    rpc_summary.append(
+                        {
+                            "time": round(time.monotonic() - started, 3),
+                            "operation": request.get("operation"),
+                            "status": response.status,
+                            "link_returned": bool(result.get("interview_url")),
+                            "error_code": result.get("error", {}).get("code"),
+                        }
+                    )
+                except (ValueError, KeyError, TypeError):
+                    pass
+
+        page.on("response", observe)
         try:
             test_panel.test_filter_direct_typed_interview_and_summary(browser, page)
             # Give the completed evidence view a readable hold in the recording.
             page.wait_for_timeout(2500)
         finally:
+            (artifacts / "rpc-summary.json").write_text(json.dumps(rpc_summary, indent=2) + "\n")
             context.close()
             browser.close()
         timeline = [

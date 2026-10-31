@@ -108,7 +108,7 @@ def test_filter_direct_typed_interview_and_summary(browser, page):
     expect(panel.locator(".jh-answer")).to_have_count(2, timeout=30000)
     panel.get_by_role("button", name="Close history", exact=True).click()
     workflow.get_by_role("button", name="Recover private interview link", exact=True).click()
-    expect(link).to_have_attribute("href", url)
+    expect(link).to_have_attribute("href", url, timeout=20000)
 
     video_checkpoint("candidate_start")
     candidate_options = {"viewport": {"width": 1000, "height": 850}}

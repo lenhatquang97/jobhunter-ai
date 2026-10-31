@@ -77,6 +77,24 @@ body:has(.aho-sidebar-brand) {
             border-radius: var(--aho-radius);
             background: var(--aho-card);
             box-shadow: none;
+            overflow: hidden;
+        }
+        .o_searchview:focus-within {
+            border-color: var(--aho-outline) !important;
+            color: inherit !important;
+            box-shadow: none !important;
+        }
+        .o_searchview:focus-within + .o_searchview_dropdown_toggler {
+            border-top-color: var(--aho-outline) !important;
+            border-right-color: var(--aho-outline) !important;
+            border-bottom-color: var(--aho-outline) !important;
+        }
+        .o_searchview input,
+        .o_searchview .o_searchview_input,
+        .o_searchview .o_input {
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
         }
         .o_form_view .o_form_sheet {
             border: 1px solid var(--aho-outline);
@@ -249,6 +267,9 @@ body:has(.aho-sidebar-brand) {
         .aho-job-todo { padding: 0; font-size: 13px; color: var(--aho-yellow-fg); }
         .aho-job-todo:hover { color: var(--aho-ink); }
         .aho-job-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--aho-space-2); }
+        .aho-job-actions {
+            margin-top: auto;
+        }
         .aho-job-actions .btn { width: 100%; white-space: nowrap; }
     }
 
@@ -307,9 +328,22 @@ body:has(.aho-sidebar-brand) {
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: var(--aho-space-4);
             align-content: start;
-            align-items: start;
+            align-items: stretch;
             padding: var(--aho-space-5) var(--aho-space-6);
             .o_kanban_record { width: 100%; min-width: 0 !important; margin: 0; }
+            .o_kanban_record {
+                display: flex;
+                flex-direction: column;
+                align-self: stretch;
+                height: 100%;
+            }
+            .o_kanban_record > .oe_kanban_global_click,
+            .o_kanban_record > .o_kanban_record_body {
+                display: flex;
+                flex: 1 1 auto;
+                flex-direction: column;
+            }
+            .aho-job-card { flex: 1 1 auto; min-height: 100%; }
             .o_kanban_ghost { display: none; }
         }
         /* Grouped pipeline: kit Contact (Kanban) columns */

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="candidate_interview" name="Private typed interview">
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="referrer" content="no-referrer"/><title>Your interview</title>
+<style>body{font-family:system-ui,sans-serif;background:#f6f5f2;color:#20352f;margin:0;padding:24px}main{max-width:700px;margin:40px auto;background:white;padding:32px;border-radius:16px}h1{margin-top:0}textarea{display:block;box-sizing:border-box;width:100%;min-height:180px;padding:16px;font:inherit;margin:16px 0}button{font:inherit;padding:12px 20px;border:0;border-radius:8px;background:#24614d;color:white;margin:8px 12px 8px 0;cursor:pointer}button:disabled{opacity:.5}#error{color:#a12b28}#progress{color:#576b63}pre{white-space:pre-wrap}</style>
+</head><body t-att-data-csrf="csrf"><main><h1>Your interview</h1><p>This private link gives access to this interview only. Submit each typed answer explicitly. You can return to this link to resume. English and Vietnamese answers are supported.</p><p id="progress" role="status">Loading your interview…</p><p id="error" role="alert"></p><section id="question" hidden="hidden"><h2 id="question-text"></h2><p id="follow-up"></p><label for="answer">Your answer / Câu trả lời</label><textarea id="answer" maxlength="10000"></textarea><button id="submit" type="button">Submit answer / Gửi câu trả lời</button></section><button id="finish" type="button">Finish interview / Kết thúc</button><section id="saved"><h2>Submitted answers</h2><div id="answers"></div></section></main>
+<script t-att-nonce="nonce" type="text/javascript"><![CDATA[
+(() => {
+const token = location.pathname.split('/').pop();
+const csrf = document.body.dataset.csrf;
+const $ = id => document.getElementById(id);
+let current = null;
+let pending = null;
+async function call(operation, args = {}) {
+ const response = await fetch('/jobhunter/interview/rpc', {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method:'call',params:{token,operation,arguments:args,csrf_token:csrf}})});
+ const payload = await response.json();
+ if (!response.ok || payload.error || payload.result?.error) throw new Error(payload.result?.error?.message || 'Interview unavailable. Refresh to resume.');
+ return payload.result;
+}
+function render(session) {
+ current = session.current_question;
+ $('progress').textContent = `${session.submitted_count} of ${session.question_count} answers submitted · ${session.status}`;
+ $('question').hidden = !current;
+ $('finish').hidden = ['completed','partial'].includes(session.status);
+ $('question-text').textContent = current?.question || '';
+ $('follow-up').textContent = current?.follow_up || '';
+ $('answer').value = '';
+ $('answers').replaceChildren();
+ for (const answer of session.answers) { const heading = document.createElement('h3');heading.textContent=answer.question;const text=document.createElement('pre');text.textContent=answer.answer;$('answers').append(heading,text); }
+}
+async function action(fn) { $('error').textContent='';$('submit').disabled=true;$('finish').disabled=true;try {await fn();}catch(error){$('error').textContent=error.message;}finally{$('submit').disabled=false;$('finish').disabled=false;} }
+$('submit').onclick = () => action(async()=>{const text=$('answer').value;if(!text.trim())throw new Error('Enter an answer before submitting.');if(!pending || pending.text!==text || pending.question_id!==current.id)pending={question_id:current.id,client_answer_id:crypto.randomUUID(),text};const result=await call('answer',pending);pending=null;render(result.session);});
+$('finish').onclick = () => action(async()=>{render((await call('finish')).session);});
+action(async()=>render((await call('get')).session));
+})();
+]]></script></body></html>
+</template>
+</odoo>

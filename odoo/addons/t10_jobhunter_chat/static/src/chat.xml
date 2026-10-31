@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="t10_jobhunter_chat.Workspace">
+    <section class="o_jobhunter_chat" t-att-class="{'jh-sidebar-open': this.state.sidebar}" aria-label="Jobhunter Chat">
+      <aside t-if="this.state.sidebar" class="jh-sidebar" aria-label="Chat history">
+        <div class="jh-sidebar-top">
+          <span class="jh-brand"><span class="jh-brand-mark">✳</span> Jobhunter</span>
+          <button class="jh-icon-button" aria-label="Close history" title="Close history" t-on-click="() => this.state.sidebar = false"><span aria-hidden="true" class="oi" data-icon="menu"/></button>
+        </div>
+        <button class="jh-new-chat" t-on-click="this.newChat"><span aria-hidden="true" class="oi" data-icon="edit"/> New chat</button>
+        <div class="jh-history-label">Your chats</div>
+        <nav class="jh-history-list" aria-label="Conversations">
+          <div t-foreach="this.state.history" t-as="conversation" t-key="conversation.id" class="jh-history-row" t-att-class="{'is-selected': this.state.conversation?.id === conversation.id}">
+            <button class="jh-history-open" t-on-click="() => this.openConversation(conversation.id)"><span t-out="conversation.title || 'New chat'"/></button>
+            <button class="jh-history-archive jh-icon-button" aria-label="Archive chat" title="Archive chat" t-on-click="() => this.archiveConversation(conversation.id)"><span aria-hidden="true" class="oi" data-icon="archive"/></button>
+          </div>
+          <p t-if="!this.state.history.length" class="jh-history-empty">Your conversations will appear here.</p>
+        </nav>
+        <div class="jh-sidebar-footer"><span aria-hidden="true" class="oi" data-icon="lock"/><span>Private to you<br/><small>Current Odoo company context</small></span></div>
+      </aside>
+      <main class="jh-main">
+        <header class="jh-header">
+          <div class="jh-header-left">
+            <button t-if="!this.state.sidebar" class="jh-icon-button" aria-label="Open history" title="Open history" t-on-click="() => this.state.sidebar = true"><span aria-hidden="true" class="oi" data-icon="menu"/></button>
+            <button class="jh-icon-button" aria-label="New chat" title="New chat" t-on-click="this.newChat"><span aria-hidden="true" class="oi" data-icon="edit"/></button>
+            <span class="jh-header-brand">Jobhunter</span>
+          </div>
+          <span class="jh-chat-pill">Chat</span>
+          <span class="jh-connection"><span t-att-class="this.state.connected ? 'is-connected' : ''"/> Odoo context</span>
+        </header>
+        <div t-if="this.props.currentRecord" class="jh-current-record"><span>On screen: <t t-out="this.props.currentRecord.label"/></span><button t-on-click="this.useCurrentRecord">Use in chat</button></div>
+        <section t-if="this.state.candidateIds.length" class="jh-workflows" aria-label="Candidate workflow">
+          <div class="jh-workflow-toolbar">
+            <label>Candidate <select aria-label="Focused candidate" t-att-value="this.state.focusId || ''" t-on-change="this.focusCandidate"><option value="">Choose a candidate</option><option t-foreach="this.state.candidateIds" t-as="candidateId" t-key="candidateId" t-att-value="candidateId" t-out="this.candidateLabel(candidateId)"/></select></label>
+            <button t-att-disabled="!this.state.workflowCase || !!this.activeRun || this.state.sending || this.state.workflowBusy" t-on-click="() => this.runWorkflow('screen')">Review CV</button>
+            <button class="jh-prepare-direct" t-att-disabled="!this.state.workflowCase?.criteria_approved || !!this.activeRun || this.state.sending || this.state.workflowBusy" t-on-click="() => this.runWorkflow('prepare_interview')">Prepare interview</button>
+            <button t-att-disabled="!this.state.workflowCase || !!this.activeRun || this.state.sending || this.state.workflowBusy" t-on-click="() => this.runWorkflow('report')">Summarize evidence</button>
+          </div>
+          <p t-if="this.state.workflowBusy" role="status">Loading candidate workflow…</p>
+          <div t-if="this.state.workflowCase" class="jh-workflow-body">
+            <t t-set="caseData" t-value="this.state.workflowCase"/>
+            <details t-if="!caseData.criteria_approved" open="open" class="jh-criteria-approval">
+              <summary>Review role criteria</summary><p>Approve this version before reviewing the CV or preparing an interview.</p>
+              <ul><li t-foreach="caseData.criteria" t-as="criterion" t-key="criterion.id" t-out="criterion.text"/></ul>
+              <button t-att-disabled="!!this.activeRun || this.state.sending" t-on-click="this.approveCriteria">Approve criteria &amp; review CV</button>
+            </details>
+            <div t-if="caseData.screening" class="jh-workflow-status">CV review: <span t-out="caseData.screening.source_state || 'current'"/></div>
+            <details t-if="caseData.screening?.content?.findings?.length" class="jh-screening-findings" open="open">
+              <summary>CV evidence by criterion</summary>
+              <ol>
+                <li t-foreach="caseData.screening.content.findings" t-as="finding" t-key="finding.criterion_id">
+                  <div class="jh-finding-heading"><strong t-out="this.criterionLabel(caseData, finding.criterion_id)"/><span class="jh-finding-status" t-att-class="'status-' + finding.status" t-out="finding.status"/></div>
+                  <p t-out="finding.finding"/>
+                  <blockquote t-foreach="finding.citations" t-as="citation" t-key="citation.source_key + ':' + citation.quote">
+                    <q t-out="citation.quote"/>
+                    <button t-if="this.workflowSource(caseData.screening, citation.source_key)" type="button"
+                      t-att-aria-label="'View source ' + citation.source_key + ' ' + this.workflowSource(caseData.screening, citation.source_key).title + ' ' + this.workflowSource(caseData.screening, citation.source_key).locator"
+                      t-on-click="() => this.openSource(this.workflowSource(caseData.screening, citation.source_key))">
+                      <span t-out="citation.source_key"/> · <span t-out="this.workflowSource(caseData.screening, citation.source_key).title"/> · <span t-out="this.workflowSource(caseData.screening, citation.source_key).locator"/>
+                    </button>
+                  </blockquote>
+                  <p t-if="finding.question" class="jh-finding-question">Clarification: <t t-out="finding.question"/></p>
+                </li>
+              </ol>
+            </details>
+            <div t-if="this.state.workflowOpen" class="jh-schedule-form" role="group" aria-label="Interview scheduling details">
+              <p>Provide the candidate and all named attendees, including their local availability. Participant count: <strong t-out="this.state.participants.length"/></p>
+              <div class="jh-schedule-fields">
+                <label>Interview start<input type="datetime-local" aria-label="Interview start" t-att-value="this.state.scheduleStart" t-on-input="(ev) => this.state.scheduleStart = ev.target.value"/></label>
+                <label>Interview timezone<input aria-label="Interview timezone" placeholder="Asia/Ho_Chi_Minh" t-att-value="this.state.scheduleZone" t-on-input="(ev) => this.state.scheduleZone = ev.target.value"/></label>
+                <label>Duration in minutes<input type="number" min="15" max="180" aria-label="Duration in minutes" t-att-value="this.state.scheduleDuration" t-on-input="(ev) => this.state.scheduleDuration = ev.target.value"/></label>
+              </div>
+              <fieldset t-foreach="this.state.participants" t-as="participant" t-key="participant_index" class="jh-attendee"><legend>Participant <t t-out="participant_index + 1"/></legend>
+                <div class="jh-schedule-fields">
+                  <label>Name<input t-att-aria-label="'Participant ' + (participant_index + 1) + ' name'" t-att-value="participant.name" t-on-input="(ev) => this.updateParticipant(participant_index, 'name', ev)"/></label>
+                  <label>Email<input type="email" t-att-aria-label="'Participant ' + (participant_index + 1) + ' email'" t-att-value="participant.email" t-on-input="(ev) => this.updateParticipant(participant_index, 'email', ev)"/></label>
+                  <label>Timezone<input t-att-aria-label="'Participant ' + (participant_index + 1) + ' timezone'" placeholder="Asia/Ho_Chi_Minh" t-att-value="participant.timezone" t-on-input="(ev) => this.updateParticipant(participant_index, 'timezone', ev)"/></label>
+                  <label>Available from<input type="datetime-local" t-att-aria-label="'Participant ' + (participant_index + 1) + ' available from'" t-att-value="participant.start" t-on-input="(ev) => this.updateParticipant(participant_index, 'start', ev)"/></label>
+                  <label>Available until<input type="datetime-local" t-att-aria-label="'Participant ' + (participant_index + 1) + ' available until'" t-att-value="participant.end" t-on-input="(ev) => this.updateParticipant(participant_index, 'end', ev)"/></label>
+                </div><button t-att-disabled="!!this.activeRun || this.state.sending" t-on-click="() => this.removeParticipant(participant_index)">Remove participant</button>
+              </fieldset>
+              <div class="jh-workflow-toolbar"><button t-att-disabled="this.state.participants.length >= 10" t-on-click="this.addParticipant">Add participant</button><button t-att-disabled="!!this.activeRun || this.state.sending" t-on-click="this.submitSchedule">Prepare booking preview</button></div>
+            </div>
+            <section t-if="caseData.schedule" class="jh-booking-preview" aria-label="Booking preview">
+              <strong>Interview booking: <t t-out="caseData.schedule.status"/></strong>
+              <p t-if="caseData.schedule.starts_at_utc">UTC: <t t-out="caseData.schedule.starts_at_utc"/> – <t t-out="caseData.schedule.ends_at_utc"/></p>
+              <p t-if="caseData.schedule.missing?.length">Required: <t t-out="caseData.schedule.missing.join(', ')"/></p>
+              <p t-if="caseData.schedule.issues?.length" t-out="caseData.schedule.issues.join('; ')"/>
+              <pre t-if="caseData.schedule.email_preview" class="jh-email-preview" t-out="typeof caseData.schedule.email_preview === 'string' ? caseData.schedule.email_preview : this.pretty(caseData.schedule.email_preview)"/>
+              <button t-if="caseData.schedule.status === 'ready' &amp;&amp; caseData.schedule.guide_ready &amp;&amp; !caseData.schedule.booking" t-att-disabled="!!this.activeRun || this.state.sending" t-on-click="this.confirmBooking">Confirm booking &amp; send</button>
+              <p t-if="caseData.schedule.booking" role="status">Reservation #<t t-out="caseData.schedule.booking.event_id"/> · Invitation: <t t-out="caseData.schedule.booking.mail_status"/></p>
+            </section>
+            <details t-if="caseData.direct_guide" class="jh-direct-guide" open="open">
+              <summary>Typed interview · <t t-out="caseData.direct_guide.language.toUpperCase()"/></summary>
+              <ol><li t-foreach="caseData.direct_guide.questions" t-as="item" t-key="item_index" t-out="item.question"/></ol>
+              <button class="jh-create-interview" t-att-disabled="!!this.activeRun || this.state.interviewBusy || !this.canCreateInterviewLink" t-on-click="this.createInterviewLink"><t t-out="this.directInterview ? 'Recover private interview link' : 'Create private interview link'"/></button>
+              <div t-if="this.state.interviewUrl" class="jh-interview-link"><a t-att-href="this.state.interviewUrl" target="_blank" rel="noopener noreferrer">Open typed interview</a><span>Private · expires 7 days after creation</span></div>
+              <p t-if="this.directInterview &amp;&amp; !this.state.interviewUrl">A private session exists. Recover its link in this browser, or prepare a new guide to create another session.</p>
+            </details>
+            <p t-if="caseData.interview" class="jh-interview-status">Interview: <t t-out="caseData.interview.status"/> · <t t-out="caseData.interview.submitted_count"/> submitted answers</p>
+          </div>
+        </section>
+        <div t-if="this.state.notice" class="jh-notice" role="status"><span aria-hidden="true" class="oi" data-icon="info"/><span t-out="this.state.notice"/><button aria-label="Reconnect chat" t-on-click="this.bootstrap">Reconnect</button></div>
+        <div class="jh-content" t-att-class="{'jh-is-empty': !this.hasMessages}">
+          <div t-if="!this.hasMessages" class="jh-welcome">
+            <div class="jh-welcome-symbol" aria-hidden="true">✳</div>
+            <h1>Where should we begin?</h1>
+            <p>Your recruiting workspace, one conversation away.</p>
+          </div>
+          <div t-else="" class="jh-thread" t-ref="this.threadRef" t-on-scroll="this.onScroll" aria-label="Conversation">
+            <div class="jh-thread-inner">
+              <article t-foreach="this.turns" t-as="turn" t-key="turn.id" class="jh-turn">
+                <div class="jh-user-message"><div class="jh-user-bubble" t-out="turn.user.text"/><div t-if="turn.user.context_refs?.length" class="jh-user-context"><span t-foreach="turn.user.context_refs" t-as="ref" t-key="ref.model + ':' + ref.id"><span aria-hidden="true" class="oi" t-att-data-icon="this.contextIcon(ref.model)"/> <t t-out="ref.label || ref.model + ' #' + ref.id"/></span></div></div>
+                <div class="jh-assistant-message">
+                  <div t-if="turn.agents.length" class="jh-activity">
+                    <button class="jh-activity-toggle" t-att-aria-expanded="turn.expanded ? 'true' : 'false'" t-on-click="() => this.toggleActivity(turn.run.id)"><span t-if="turn.active" class="jh-working-dot"/><span t-out="turn.active ? 'Working…' : 'Worked for ' + turn.duration"/><span aria-hidden="true" class="oi" t-att-data-icon="(turn.expanded ? 'expand_more' : 'chevron_right')"/></button>
+                    <div t-if="turn.expanded" class="jh-activity-body">
+                      <div t-foreach="turn.agents" t-as="agent" t-key="agent.key" class="jh-agent">
+                        <div class="jh-agent-heading"><span class="jh-agent-glyph">✳</span><span class="jh-agent-name" t-out="agent.name"/><span class="jh-activity-status" t-att-class="'status-' + agent.status" t-out="this.label(agent.status)"/><small t-out="this.duration(agent.started_at, agent.finished_at)"/></div>
+                        <details t-foreach="agent.tools" t-as="tool" t-key="tool.key" class="jh-tool">
+                          <summary><span aria-hidden="true" class="oi" data-icon="terminal"/><code t-out="tool.name"/><span class="jh-activity-status" t-att-class="'status-' + tool.status" t-out="this.label(tool.status)"/><small t-out="this.duration(tool.started_at, tool.finished_at)"/></summary>
+                          <div class="jh-tool-detail"><span class="jh-tool-label">Input</span><pre t-out="this.pretty(tool.arguments)"/><t t-if="tool.summary"><span class="jh-tool-label">Result</span><p t-out="typeof tool.summary === 'string' ? tool.summary : this.pretty(tool.summary)"/></t><pre t-foreach="(tool.sources || []).slice(0, 3)" t-as="excerptSource" t-key="excerptSource.key" class="jh-result-excerpt" t-out="excerptSource.excerpt.slice(0, 1400)"/><div t-if="tool.sources?.length" class="jh-tool-sources"><button t-foreach="tool.sources" t-as="source" t-key="source.key" t-on-click="() => this.openSource(source)"><span aria-hidden="true" class="oi" data-icon="description"/> <t t-out="source.title"/></button></div></div>
+                        </details>
+                      </div>
+                    </div>
+                  </div>
+                  <div t-if="turn.unavailable" class="jh-answer-state"><span aria-hidden="true" class="oi" data-icon="lock"/> This answer is hidden because its sources are no longer available to you.</div>
+                  <t t-else="">
+                    <div t-if="turn.outdated" class="jh-outdated"><span aria-hidden="true" class="oi" data-icon="history"/> Sources have changed. Refresh this answer before using it.</div>
+                    <div t-if="turn.text" class="jh-answer" t-out="this.markdown(turn.text)"/>
+                    <div t-elif="turn.active" class="jh-waiting" aria-live="polite"><span/><span/><span/></div>
+                    <div t-if="turn.sources.length" class="jh-source-list"><button t-foreach="turn.sources" t-as="source" t-key="source.key" class="jh-source" t-att-title="source.excerpt" t-on-click="() => this.openSource(source)"><span class="jh-source-key" t-out="source.key"/><span aria-hidden="true" class="oi" t-att-data-icon="(source.attachment_id ? 'description' : 'open_in_new')"/><span t-out="source.title"/><small t-out="source.locator"/></button></div>
+                    <div t-if="!turn.active" class="jh-answer-actions"><button t-if="turn.text" class="jh-icon-button" t-att-aria-label="this.state.copied === turn.id ? 'Copied' : 'Copy answer'" t-on-click="() => this.copy(turn)"><span aria-hidden="true" class="oi" t-att-data-icon="(this.state.copied === turn.id ? 'check' : 'content_copy')"/></button><span t-if="turn.run.status !== 'completed'" class="jh-run-status" t-att-class="'status-' + turn.run.status" t-out="turn.status"/><button t-if="turn.outdated || ['failed','cancelled','interrupted','needs_input'].includes(turn.run.status)" class="jh-retry" t-att-disabled="!!this.activeRun || this.state.sending" t-on-click="() => this.send(turn)"><span aria-hidden="true" class="oi" data-icon="refresh"/> <t t-out="turn.outdated ? 'Refresh answer' : 'Try again'"/></button></div>
+                    <p t-if="turn.run.error?.message" class="jh-run-error" role="status" t-out="turn.run.error.message"/>
+                  </t>
+                </div>
+              </article>
+            </div>
+          </div>
+          <div class="jh-compose-area">
+            <div t-if="this.state.contexts.length" class="jh-context-chips"><span t-foreach="this.state.contexts" t-as="context" t-key="context.key" class="jh-context-chip"><span aria-hidden="true" class="oi" t-att-data-icon="this.contextIcon(context.model)"/><span t-out="context.label || context.model + ' #' + context.id"/><button aria-label="Remove context" t-on-click="() => this.removeContext(context.key)">×</button></span></div>
+            <div class="jh-composer" t-att-class="{'is-busy': this.state.sending}">
+              <button class="jh-icon-button jh-add-context" aria-label="Add Odoo context" title="Add existing Odoo records or documents" t-on-click="this.openPicker"><span aria-hidden="true" class="oi" data-icon="add"/></button>
+              <textarea t-ref="this.inputRef" aria-label="Message Jobhunter" placeholder="Ask Jobhunter" rows="1" maxlength="20000" t-att-value="this.state.draft" t-on-input="this.onInput" t-on-keydown="this.onKeydown"/>
+              <button t-if="this.activeRun" class="jh-send jh-stop" aria-label="Stop response" t-att-disabled="this.state.stopping" t-on-click="this.stop"><span/></button>
+              <button t-else="" class="jh-send" aria-label="Send message" t-att-disabled="!this.canSend" t-on-click="() => this.send()"><span aria-hidden="true" class="oi" t-att-data-icon="this.state.sending ? 'progress_activity' : 'arrow_upward'"/></button>
+            </div>
+            <div class="jh-composer-caption"><span aria-hidden="true" class="oi" data-icon="link"/> Existing Odoo records <span>·</span> Cited evidence · Human decisions</div>
+            <div t-if="!this.hasMessages" class="jh-suggestions">
+              <button t-on-click="() => this.selectPrompt('Show me the open roles in my current company.')"><span class="jh-suggestion-icon"><span aria-hidden="true" class="oi" data-icon="work_outline"/></span><span>Explore open roles<small>Find the jobs you’re working on</small></span><span aria-hidden="true" class="oi" data-icon="arrow_upward"/></button>
+              <button t-on-click="() => this.selectPrompt('Find an applicant and summarize their experience with source references.')"><span class="jh-suggestion-icon"><span aria-hidden="true" class="oi" data-icon="person_outline"/></span><span>Get to know an applicant<small>Bring the relevant experience into focus</small></span><span aria-hidden="true" class="oi" data-icon="arrow_upward"/></button>
+              <button t-on-click="() => this.selectPrompt('Summarize the selected document and cite the exact evidence.')"><span class="jh-suggestion-icon"><span aria-hidden="true" class="oi" data-icon="description"/></span><span>Read a document together<small>Add an existing CV or job document</small></span><span aria-hidden="true" class="oi" data-icon="arrow_upward"/></button>
+            </div>
+          </div>
+        </div>
+        <div t-if="this.state.loading" class="jh-loading" role="status"><span aria-hidden="true" class="oi jh-spin" data-icon="progress_activity"/> Loading your workspace…</div>
+      </main>
+      <div t-if="this.state.picker" class="jh-picker-backdrop" t-on-keydown="this.onPickerKeydown">
+        <div class="jh-picker" role="dialog" aria-modal="true" aria-labelledby="jh-picker-title">
+          <div class="jh-picker-heading"><div><h2 id="jh-picker-title">Add Odoo context</h2><p>Choose records and documents you can access.</p></div><button class="jh-icon-button" aria-label="Close context picker" t-on-click="this.closePicker">×</button></div>
+          <div class="jh-picker-tabs"><button t-att-class="{'is-active': this.state.pickerModel === 'hr.job'}" t-on-click="() => this.pickerTab('hr.job')"><span aria-hidden="true" class="oi" data-icon="work_outline"/> Jobs</button><button t-att-class="{'is-active': this.state.pickerModel === 'hr.applicant'}" t-on-click="() => this.pickerTab('hr.applicant')"><span aria-hidden="true" class="oi" data-icon="person_outline"/> Applicants</button></div>
+          <div t-if="this.state.pickerParent" class="jh-picker-parent"><button t-on-click="this.backToRecords"><span aria-hidden="true" class="oi" data-icon="chevron_left"/> Back</button><span t-out="this.state.pickerParent.label"/></div>
+          <div t-else="" class="jh-picker-search"><span aria-hidden="true" class="oi" data-icon="search"/><input t-ref="this.searchRef" aria-label="Search Odoo records" placeholder="Search by name…" t-att-value="this.state.pickerQuery" t-on-input="this.onSearch"/></div>
+          <div class="jh-picker-results"><p t-if="this.state.pickerBusy" class="jh-picker-empty"><span aria-hidden="true" class="oi jh-spin" data-icon="progress_activity"/> Finding records…</p><p t-elif="this.state.pickerError" class="jh-picker-empty" role="status" t-out="this.state.pickerError"/><t t-else=""><div t-foreach="this.state.pickerRecords" t-as="record" t-key="record.model + ':' + record.id" class="jh-picker-record"><button class="jh-picker-select" t-on-click="() => this.addContext(record)"><span class="jh-record-icon"><span aria-hidden="true" class="oi" t-att-data-icon="this.contextIcon(record.model)"/></span><span t-out="record.label"/><span aria-hidden="true" class="oi" data-icon="add"/></button><button t-if="record.model !== 'ir.attachment'" class="jh-picker-documents" t-on-click="() => this.showDocuments(record)">Documents <span aria-hidden="true" class="oi" data-icon="chevron_right"/></button></div><p t-if="!this.state.pickerRecords.length" class="jh-picker-empty">No matching records found.</p></t></div>
+          <div class="jh-picker-footer"><span aria-hidden="true" class="oi" data-icon="lock"/> Your Odoo permissions apply to every source.</div>
+        </div>
+      </div>
+    </section>
+  </t>
+</templates>

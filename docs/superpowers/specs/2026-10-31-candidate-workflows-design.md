@@ -1,0 +1,22 @@
+# Candidate Workflows and Playwright Verification
+
+User-approved 2026-10-31: extend native Odoo chat with actual Filter, Schedule, Interview and Report execution. Odoo owns private recruiter-scoped candidate workflow artifacts; Python owns conversations and bounded runs. Multiple applicants may occur in one conversation; each applicant may occur in multiple conversations. Never merge identities by name/email. Reuse current artifacts only across the same recruiter's chats and original company scope.
+
+Later explicit clarification: all four specialists are ADAPTERS for friends' implementations, which the user will plug in later. Implement the host/typed adapter contracts, not replacement specialist logic. Default unconfigured slots visibly unavailable; test adapters are labeled synthetic and prove the host only. Do not automatically invoke current RAG scoring/ranking services.
+
+Recover the missing native addon into an isolated Odoo checkout based on ea8a848; preserve the shared feat/rag-hr-screening checkout and unrelated Slack work. Restore original behavior and rerun baseline before extending.
+
+Filter requires explicit approval of a versioned job criteria snapshot and produces cited supported/partial/unknown/conflicting findings, never scores/rankings/stage decisions. Schedule collects exact dates, IANA timezones, duration, named attendees/emails/count and supplied availability, computes overlap deterministically and checks permitted Odoo calendar conflicts. Interview prepares five main typed questions with at most one follow-up each. Preview exact candidate/time/attendees/email; explicit Confirm booking & send approves only that version. Create one Odoo reservation/session and queue one candidate email; late acknowledgments/retries must not duplicate effects. Candidate email fixture: netlink269@gmail.com. No external calendar sync.
+
+Candidate link is expiring/revocable and exposes only its own questions and answer operations. English/Vietnamese typed answers are explicitly submitted, immutable/idempotent and resumable. Link preparation/opening/elapsed appointment is never completed participation. Report uses current screening, schedule and actual answers with exact citations and preserves incomplete evidence. Revalidate owner/candidate/source access and versions throughout.
+
+Runs keep 120-second, six-provider-request and eight-tool-call limits. Needs-input is a persisted handoff and terminates the run. Signed callbacks explicitly scope new artifact operations; no unrestricted ORM, legacy automation, stage updates, ranking, hiring decisions, voice or video. Booking/email are narrowly authorized expansions of previous read-only rules. Stop records already committed effects rather than claiming rollback.
+
+Explore the updated UI before writing executable pytest-playwright tests. Use a disposable real Odoo/backend/PostgreSQL stack, deterministic provider injection and local SMTP capture, separate recruiter/candidate contexts and synthetic data. Cover full chain, multiple candidates/chats, ambiguity, ACL/company isolation, source changes/revocation/injection, unreadable/conflicting CVs, timezone/DST/no-overlap, approval changes/races/duplicates, provider failures/timeouts/cancel/restart/replay, mail failures and invalid/expired/revoked links. Preserve traces/screenshots and machine evidence; rerun backend/Odoo/Hoot/Slack tests.
+
+Odoo-owned workflows were chosen over backend-owned artifacts to preserve business permissions. Live OpenAI verification stays separate. One external email remains pending until the user supplies public HTTPS and SMTP. No commits/push/deployment automatically. Update harness with scoped tasks/evidence while preserving historical results/backlog.
+
+
+## Approved migration addendum
+
+The user subsequently approved the recruitment-agent-panel plan: jobhunter-ai now owns the native addon and imported Filter/Interview sources. Configure adapted Filter, Interview and Report implementations through the host gateway, preserving the no-score/no-ranking evidence contract. The direct typed interview flow creates a private link only after an explicit recruiter action, without scheduling, email or voice. Existing booking endpoints remain compatible. See the implementation plan dated2026-10-31-recruitment-agent-panel and the additive workflow-contract section; earlier unconfigured-slot statements record the previous phase.

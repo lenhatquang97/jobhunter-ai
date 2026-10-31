@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="rag_filter_form" model="ir.ui.view">
+        <field name="name">rag.filter.form</field>
+        <field name="model">rag.filter</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_match" type="object" string="Match &amp; Rank" class="btn-primary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <field name="jd_file" filename="jd_filename"/>
+                        <field name="jd_filename" invisible="1"/>
+                        <field name="cv_ids" widget="many2many_binary"/>
+                        <field name="job" invisible="not job"/>
+                    </group>
+                    <notebook>
+                        <page string="Ranking">
+                            <field name="result_ids">
+                                <list>
+                                    <field name="rank"/>
+                                    <field name="candidate"/>
+                                    <field name="file"/>
+                                    <field name="score" widget="progressbar"/>
+                                    <field name="summary"/>
+                                    <field name="error" optional="hide"/>
+                                </list>
+                                <form>
+                                    <group>
+                                        <field name="candidate"/>
+                                        <field name="file"/>
+                                        <field name="score" widget="progressbar"/>
+                                        <field name="summary"/>
+                                        <field name="matched"/>
+                                        <field name="partial"/>
+                                        <field name="missing"/>
+                                        <field name="error" invisible="not error"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="JD Requirements">
+                            <field name="requirements"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_rag_filter" model="ir.actions.act_window">
+        <field name="name">CV Screening</field>
+        <field name="res_model">rag.filter</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_rag_filter" name="CV Screening" parent="hr_recruitment.menu_hr_recruitment_root"
+              action="action_rag_filter" sequence="41"/>
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id,group_id/id,operation,domain
+access_rag_interview_user,rag.interview user,rag.interview,hr_recruitment.group_hr_recruitment_user,crud,
+access_rag_interview_manager,rag.interview manager,rag.interview,hr_recruitment.group_hr_recruitment_manager,crud,
+access_rag_interview_turn_user,rag.interview.turn user,rag.interview.turn,hr_recruitment.group_hr_recruitment_user,r,
+access_rag_interview_turn_manager,rag.interview.turn manager,rag.interview.turn,hr_recruitment.group_hr_recruitment_manager,crud,

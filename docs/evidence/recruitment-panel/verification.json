@@ -1,0 +1,35 @@
+{
+  "backend_sqlite": {
+    "passed": 138,
+    "skipped": 1
+  },
+  "backend_postgresql": {
+    "passed": 139
+  },
+  "native_odoo_postgresql": {
+    "passed": 51
+  },
+  "hoot": {
+    "passed": 17,
+    "assertions": 49
+  },
+  "browser_live": {
+    "passed": 2,
+    "duration_seconds": 99.01,
+    "provider": "OpenAI Responses; configured model; synthetic records"
+  },
+  "browser_deterministic": {
+    "passed": 2,
+    "duration_seconds": 72.54,
+    "provider": "Controlled responses; real migrated adapters"
+  },
+  "service": {
+    "database": "ok",
+    "provider_configured": true,
+    "roles": [
+      "Filter",
+      "Interview",
+      "Report"
+    ]
+  }
+}

@@ -1,0 +1,3 @@
+id,name,model_id,group_id/id,operation,domain
+access_rag_filter_user,rag.filter user,rag.filter,hr_recruitment.group_hr_recruitment_user,crud,
+access_rag_filter_result_user,rag.filter.result user,rag.filter.result,hr_recruitment.group_hr_recruitment_user,crud,

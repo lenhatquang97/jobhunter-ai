@@ -1,0 +1,1 @@
+"""Internal Jobhunter Chat service."""

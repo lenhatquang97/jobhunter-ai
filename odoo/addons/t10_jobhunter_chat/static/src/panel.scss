@@ -1,0 +1,50 @@
+body.jh-panel-visible .o_action_manager { margin-right: var(--jh-panel-width, 420px); min-width: 0; }
+.jh-panel-toggle { border: 1px solid #d5d5d5; border-radius: 7px; background: white; padding: 5px 10px; margin-right: 8px; color: #292929; display: flex; align-items: center; gap: 6px; }
+.jh-recruitment-panel {
+  position: fixed; right: 0; top: var(--o-navbar-height, 46px); bottom: 0; z-index: 90;
+  background: #fdfdfc; border-left: 1px solid #dadbd8; display: flex; flex-direction: column;
+  &.jh-panel-hidden { display: none; }
+  .jh-panel-title { display:flex; align-items:center; justify-content:space-between; padding:14px 18px 10px; border-bottom:1px solid #e9e9e7; }
+  .jh-panel-title strong { display:block; font-size:15px; color:#202821; }
+  .jh-panel-title span { display:block; color:#858585; font-size:11px; margin-top:2px; }
+  .jh-panel-title button { border:0; border-radius:5px; background:transparent; font-size:24px; color:#777; padding:0 9px; }
+  .jh-panel-resizer { position:absolute; left:-4px; top:0; bottom:0; width:8px; cursor:col-resize; z-index:5; touch-action:none; }
+  .jh-panel-resizer:hover, .jh-panel-resizer:focus-visible { background:#71877555; }
+  .o_jobhunter_chat { font-size:13px; }
+  .jh-header { height:47px; padding:0 12px; }
+  .jh-header-brand,.jh-chat-pill { display:none; }
+  .jh-connection { font-size:10px; }
+  .jh-sidebar { position:absolute; inset:0 auto 0 0; z-index:20; width:250px; box-shadow:8px 0 35px #00000013; }
+  .jh-workflows { padding:9px 14px; max-height:43%; }
+  .jh-workflow-toolbar { gap:6px; }
+  .jh-workflow-toolbar button { padding:5px 8px; font-size:12px; }
+  .jh-workflow-toolbar label { width:100%; }
+  .jh-workflow-toolbar select { max-width:255px; }
+  .jh-thread-inner { padding:16px 18px 6px; width:100%; max-width:100%; }
+  .jh-compose-area { max-width:calc(100% - 24px); padding:10px 0 14px; }
+  .jh-composer { border-radius:18px; padding:6px; min-height:52px; gap:2px; }
+  .jh-composer textarea { font-size:13px; line-height:20px; }
+  .jh-welcome { margin-bottom:22px; }
+  .jh-welcome h1 { font-size:23px; letter-spacing:-.5px; }
+  .jh-welcome > p { max-width:260px; line-height:1.6; }
+  .jh-content { overflow:hidden; }
+  .jh-content.jh-is-empty { padding:12px 16px 16px; justify-content:flex-start; overflow-y:auto; }
+  .jh-welcome { flex-shrink:0; margin-top:12px; }
+  .jh-workflows ~ .jh-content .jh-suggestions { display:none; }
+  .jh-suggestions { margin-top:18px; }
+  .jh-suggestion { padding:8px 5px; }
+  .jh-user-bubble { max-width:100%; }
+  .jh-answer { font-size:13px; line-height:1.7; }
+  .jh-current-record { margin:0 12px 8px; padding:7px 9px; display:flex; align-items:center; gap:7px; border:1px solid #e4e8e2; background:#f2f5f1; border-radius:7px; font-size:11px; }
+  .jh-current-record button { margin-left:auto; border:0; border-radius:5px; background:white; padding:4px 7px; font-size:11px; }
+  .jh-direct-guide { margin-top:8px; padding-top:8px; border-top:1px solid #eee; }
+  .jh-direct-guide ol { padding-left:20px; }
+  .jh-direct-guide li { margin:6px 0; }
+  .jh-interview-link { display:flex; gap:8px; align-items:center; margin-top:8px; }
+  .jh-interview-link a { color:#315940; }
+}
+@media(max-width:900px) {
+  body.jh-panel-visible .o_action_manager { margin-right:0; }
+  .jh-recruitment-panel { width:100vw !important; max-width:480px; box-shadow:-10px 0 40px #0002; }
+  .jh-panel-resizer { display:none; }
+}

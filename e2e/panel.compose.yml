@@ -1,0 +1,11 @@
+# Synthetic provider responses, real specialist adapters + Odoo/PostgreSQL.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: e2e/Dockerfile
+    command: [/app/.venv/bin/uvicorn, 'e2e.panel_app:create', --factory, --host, 0.0.0.0, --port, '8000', --workers, '1', --no-access-log]
+    environment:
+      JOBHUNTER_OPENAI_API_KEY: synthetic-provider-fixture-only
+    volumes:
+      - ./e2e:/app/e2e:ro

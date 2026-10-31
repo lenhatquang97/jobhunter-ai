@@ -1,0 +1,61 @@
+name: jobhunter-workflow-e2e
+services:
+  odoo-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo-test-only
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U odoo]
+      interval: 2s
+      retries: 30
+    volumes: [odoo-db:/var/lib/postgresql/data]
+  odoo:
+    image: t10-odoo
+    depends_on:
+      odoo-db: {condition: service_healthy}
+    environment:
+      HOST: odoo-db
+      USER: odoo
+      PASSWORD: odoo-test-only
+      JOBHUNTER_API_URL: http://api:8000
+      JOBHUNTER_BRIDGE_SECRET: workflow-e2e-internal-only
+      JOBHUNTER_TEST_CAPTURE: '1'
+    ports: ['127.0.0.1:18069:8069']
+    volumes:
+      - ${JOBHUNTER_ODOO_WORKTREE:?Set isolated Odoo worktree}/addons/t10_jobhunter_chat:/mnt/extra-addons/t10_jobhunter_chat:ro
+      - odoo-data:/var/lib/odoo
+    command: ['--database=jobhunter_e2e', '--db-filter=^jobhunter_e2e$', '--without-demo=all', '--dev=xml,qweb']
+  backend-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: jobhunter
+      POSTGRES_PASSWORD: workflow-test-only
+      POSTGRES_DB: jobhunter
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U jobhunter]
+      interval: 2s
+      retries: 30
+    volumes: [backend-db:/var/lib/postgresql/data]
+  api:
+    build:
+      context: ..
+      dockerfile: e2e/Dockerfile
+    depends_on:
+      backend-db: {condition: service_healthy}
+    environment:
+      JOBHUNTER_DATABASE_URL: postgresql+asyncpg://jobhunter:workflow-test-only@backend-db:5432/jobhunter
+      JOBHUNTER_BRIDGE_SECRET: workflow-e2e-internal-only
+      JOBHUNTER_ODOO_BASE_URL: http://odoo:8069
+      JOBHUNTER_OPENAI_API_KEY: synthetic-test-only
+    volumes:
+      - ../backend:/app/backend:ro
+      - .:/app/e2e:ro
+  mail:
+    image: axllent/mailpit:v1.27
+    ports: ['127.0.0.1:18025:8025']
+volumes:
+  odoo-db:
+  backend-db:
+  odoo-data:

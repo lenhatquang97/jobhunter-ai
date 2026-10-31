@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_rag" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.rag.interview</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_recruitment.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='hr_recruitment']" position="inside">
+                <block title="RAG Interview Agent" name="rag_interview_agent">
+                    <setting string="API Keys" help="Server-side keys; never exposed to candidates.">
+                        <div class="content-group">
+                            <field name="rag_openrouter_key" password="1" placeholder="OpenRouter key"/>
+                            <field name="rag_openai_key" password="1" placeholder="OpenAI key"/>
+                        </div>
+                    </setting>
+                    <setting string="Models" help="OpenRouter model IDs. Keep structured output support enabled.">
+                        <div class="content-group">
+                            <field name="rag_turn_model"/>
+                            <field name="rag_report_model"/>
+                            <field name="rag_embed_model"/>
+                            <field name="rag_realtime_model"/>
+                            <field name="rag_realtime_voice"/>
+                            <field name="rag_transcribe_model"/>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

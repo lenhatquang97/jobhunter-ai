@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="t10_jobhunter_chat.RecruitmentPanel">
+    <aside t-if="this.state.active || this.state.mounted" class="jh-recruitment-panel" t-att-class="{'jh-panel-hidden': !this.state.active || !this.state.open}" aria-label="AI recruiting assistant" t-att-style="'width:' + this.state.width + 'px'">
+      <div class="jh-panel-resizer" role="separator" aria-label="Resize AI chat" aria-orientation="vertical" tabindex="0" aria-valuemin="360" aria-valuemax="640" t-att-aria-valuenow="this.state.width" t-on-pointerdown="this.startResize" t-on-keydown="this.resizeKey"/>
+      <div class="jh-panel-title"><div><strong>Jobhunter AI</strong><span>Recruiting assistant</span></div><button aria-label="Collapse AI chat" title="Collapse AI chat" t-on-click="() => this.panel.toggle()">›</button></div>
+      <JobhunterChat action="this.chatAction" docked="true" currentRecord="this.state.currentRecord"/>
+    </aside>
+  </t>
+  <t t-name="t10_jobhunter_chat.PanelToggle"><button t-if="this.panel.state.active" class="jh-panel-toggle" t-att-aria-expanded="this.panel.state.open ? 'true' : 'false'" aria-label="Toggle AI chat" title="Jobhunter AI" t-on-click="() => this.panel.toggle()"><span aria-hidden="true" class="oi" data-icon="chat"/> <span>AI chat</span></button></t>
+  <t t-name="t10_jobhunter_chat.OpenWorkspace"><div role="status" class="p-4">Opening Recruitment with Jobhunter AI…</div></t>
+</templates>

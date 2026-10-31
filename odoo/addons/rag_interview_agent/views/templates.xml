@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="interview_page">
+        &lt;!DOCTYPE html&gt;
+        <html lang="en">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title>AI Interview</title>
+                <style>
+                    :root { --bg:#f6f7fb; --card:#fff; --text:#1f2330; --muted:#6b7080; --accent:#714b67; --border:#e3e5ec; --rec:#d23f3f; }
+                    @media (prefers-color-scheme: dark) { :root { --bg:#14151a; --card:#1d1f26; --text:#e8e9ee; --muted:#9a9eab; --accent:#c69bbb; --border:#2c2f38; } }
+                    * { box-sizing: border-box; }
+                    body { margin:0; font:16px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--text); }
+                    main { max-width:640px; margin:0 auto; padding:24px 16px; display:flex; flex-direction:column; gap:16px; }
+                    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; }
+                    h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:16px; margin:0 0 12px; }
+                    .muted { color:var(--muted); font-size:14px; } .err { color:var(--rec); }
+                    button { padding:10px 18px; border:0; border-radius:10px; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
+                    button:disabled { opacity:.5; cursor:default; }
+                    label { display:flex; gap:8px; align-items:flex-start; margin:12px 0; }
+                    .ai { display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center; padding:32px 20px; }
+                    .orb { width:96px; height:96px; border-radius:50%; background:var(--accent); opacity:.85; }
+                    .orb.talk { animation:pulse 1s infinite ease-in-out; }
+                    .orb.listen { background:var(--rec); animation:pulse 1.6s infinite ease-in-out; }
+                    @keyframes pulse { 50% { transform:scale(1.12); opacity:1; } }
+                    @media (prefers-reduced-motion: reduce) { .orb.talk, .orb.listen { animation:none; } }
+                    #question { font-size:20px; min-height:60px; }
+                    #heard { min-height:48px; color:var(--muted); font-style:italic; }
+                    [hidden] { display:none !important; }
+                </style>
+            </head>
+            <body>
+                <main>
+                    <t t-if="not open">
+                        <div class="card"><h2>This link is no longer valid</h2>
+                            <p class="muted">The interview has ended or the link is incorrect.</p></div>
+                    </t>
+                    <t t-else="">
+                        <div class="card">
+                            <h1 t-esc="session.job_id.name"/>
+                            <p class="muted" t-esc="session.company_id.name"/>
+                        </div>
+                        <div class="card" id="consent">
+                            <h2>Before you start</h2>
+                            <p>This is a voice interview run by an AI assistant. Your voice and answers are sent to AI providers (OpenAI, OpenRouter) for processing and stored for the recruiting team. The final decision is made by a human.</p>
+                            <p class="muted">Speak naturally; pause for a few seconds or press "I'm done" when you finish an answer.</p>
+                            <label><input type="checkbox" id="agree"/> <span>I understand and agree to take part in this interview</span></label>
+                            <p class="err" id="blocker" role="alert"></p>
+                            <button id="start" disabled="disabled">Turn on microphone and start</button>
+                        </div>
+                        <div class="card ai" id="stage" hidden="hidden">
+                            <div class="orb" id="orb" aria-hidden="true"></div>
+                            <div id="question" aria-live="polite"></div>
+                            <div id="heard" aria-live="polite"></div>
+                            <p class="muted" id="status"></p>
+                            <button id="done" disabled="disabled">I'm done</button>
+                        </div>
+                        <!-- ponytail: bump ?v= after editing interview.js, browsers cache static files for 7 days --><script src="/rag_interview_agent/static/src/interview.js?v=3"></script>
+                    </t>
+                </main>
+            </body>
+        </html>
+    </template>
+</odoo>

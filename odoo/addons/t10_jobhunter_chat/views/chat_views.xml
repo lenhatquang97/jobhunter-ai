@@ -1,0 +1,7 @@
+<odoo>
+    <record id="action_chat_workspace" model="ir.actions.client">
+        <field name="name">Jobhunter Chat</field>
+        <field name="tag">t10_jobhunter_chat.workspace</field>
+    </record>
+    <menuitem id="menu_chat_workspace" name="Jobhunter Chat" parent="hr_recruitment.menu_hr_recruitment_root" action="action_chat_workspace" sequence="5" groups="hr_recruitment.group_hr_recruitment_interviewer"/>
+</odoo>

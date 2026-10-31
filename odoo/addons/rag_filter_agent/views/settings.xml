@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_rag_filter" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.rag.filter</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_recruitment.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='hr_recruitment']" position="inside">
+                <block title="CV Screening (JD match)" name="rag_filter_agent">
+                    <setting string="OpenAI" help="Server-side key; falls back to the OPENAI_API_KEY env var.">
+                        <div class="content-group">
+                            <field name="rag_filter_openai_key" password="1" placeholder="sk-..."/>
+                            <field name="rag_filter_model"/>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

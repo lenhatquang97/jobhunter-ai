@@ -80,8 +80,14 @@ body:has(.aho-sidebar-brand) {
             overflow: hidden;
         }
         .o_searchview:focus-within {
-            border: 1px solid var(--aho-outline) !important;
+            border-color: var(--aho-outline) !important;
+            color: inherit !important;
             box-shadow: none !important;
+        }
+        .o_searchview:focus-within + .o_searchview_dropdown_toggler {
+            border-top-color: var(--aho-outline) !important;
+            border-right-color: var(--aho-outline) !important;
+            border-bottom-color: var(--aho-outline) !important;
         }
         .o_searchview input,
         .o_searchview .o_searchview_input,

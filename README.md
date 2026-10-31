@@ -7,6 +7,22 @@ React/Vite + FastAPI workspace containing two interview modes:
 
 The assistant does not make hiring decisions or assign suitability scores. The WAV is only a deterministic demo source: transcript text is produced from the live AssemblyAI WebSocket stream, not replayed from a prepared transcript cache.
 
+## Interview Agent boundary
+
+The existing feature routes stay independent from orchestration. A future Orchestrator integrates through one bounded specialist endpoint:
+
+```text
+POST /api/agents/interview
+Orchestrator assignment
+  -> Interview Agent adapter
+  -> persisted feature state
+  -> Complete | Needs input | Failed handoff
+```
+
+The assignment carries `request_ref`, requested outcome (`prepare`, `conduct`, or `summarize`), harness version, candidate and approved role references, interview mode, source references/hashes, and an optional screening `session_id`. The response returns the shared top-level `assignment`, `context`, `result`, `summary`, `output`, `open_items`, and `next_action` fields. It preserves artifact/answer/finding references and a concrete next-action owner. It does not start a candidate conversation, call a model, dispatch another agent, change a candidate stage, or copy raw candidate answers into the handoff.
+
+Current integration limits are explicit: quick-screening sessions can produce orchestration handoffs; prepared guides and human-assistant transcripts/feedback do not yet have persisted specialist artifacts, so those assignments return `Needs input` instead of simulated success.
+
 ## Run locally
 
 Backend (Python 3.12+):

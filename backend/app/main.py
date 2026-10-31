@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from . import agent, assemblyai_demo, copilot, store
+from . import agent, assemblyai_demo, copilot, interview_specialist, store
 
 _logger = logging.getLogger(__name__)
 
@@ -122,6 +122,16 @@ def retry_report(id_: int, tasks: BackgroundTasks):
     store.update(id_, state='done', error=None)
     tasks.add_task(write_report, id_)
     return {'state': 'done'}
+
+
+@app.post(
+    '/api/agents/interview',
+    response_model=interview_specialist.InterviewHandoff,
+    dependencies=[Depends(recruiter)],
+)
+def interview_agent_handoff(body: interview_specialist.InterviewAssignment):
+    """Stable specialist boundary for a future orchestrator; never starts work implicitly."""
+    return interview_specialist.run_interview_assignment(body, store.get)
 
 def write_report(id_):
     s = store.get(id_)

@@ -66,3 +66,37 @@ def test_audio_consent_can_be_granted_and_revoked_without_starting(tmp_path, mon
     assert client.get(f"/api/i/{token}").json()["audio_consent"] is True
     assert client.post(f"/api/i/{token}/consent", json={"consent": False}).json()["audio_consent"] is False
     assert client.get(f"/api/i/{token}").json()["audio_consent"] is False
+
+
+def test_orchestrator_interview_boundary_returns_typed_handoff(tmp_path, monkeypatch):
+    client = _client(tmp_path, monkeypatch)
+    created = _create(client)
+    response = client.post(
+        "/api/agents/interview",
+        headers={"Authorization": "Bearer test-recruiter"},
+        json={
+            "request_ref": "run-1/interview",
+            "requested_outcome": "conduct",
+            "context": {
+                "candidate_ref": "candidate-1",
+                "role_ref": "role-1",
+                "role_version": "v1",
+                "mode": "quick_screening",
+                "session_id": created["id"],
+                "source_refs": [
+                    {"id": "company-1", "kind": "company", "content_hash": "sha256:company"},
+                    {"id": "jd-1", "kind": "job_description", "content_hash": "sha256:jd"},
+                    {"id": "cv-1", "kind": "cv", "content_hash": "sha256:abc"},
+                ],
+                "criteria": [
+                    {"id": "current-role", "description": "Recent role and responsibilities"}
+                ],
+            },
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["assignment"]["agent"] == "Interview"
+    assert body["result"] == "Needs input"
+    assert body["output"]["session_state"] == "ready"
+    assert body["next_action"]["owner"] == "candidate"

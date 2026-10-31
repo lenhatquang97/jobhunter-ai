@@ -29,7 +29,7 @@ export default {
       return new Response('This route is disabled.', {status:403,headers:{'cache-control':'private, no-store'}});
     }
     if (incoming.pathname === '/') {
-      return new Response(null, {status:302,headers:{location:'/odoo/hr.applicant','cache-control':'private, no-store'}});
+      return new Response(null, {status:302,headers:{location:'/odoo/recruitment-applications','cache-control':'private, no-store'}});
     }
 
     const destination = new URL(upstream);

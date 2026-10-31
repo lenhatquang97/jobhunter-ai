@@ -21,7 +21,7 @@ def video_checkpoint(name):
 
 def login(page):
     page.set_viewport_size({"width": 1440, "height": 960})
-    page.goto(BASE + os.getenv("JOBHUNTER_PANEL_PATH", "/odoo/hr.applicant"))
+    page.goto(BASE + os.getenv("JOBHUNTER_PANEL_PATH", "/odoo/recruitment-applications"))
     if "/web/login" in page.url:
         page.get_by_role("textbox", name="Email", exact=True).fill(
             os.getenv("JOBHUNTER_PANEL_LOGIN", "workflow.qa1")
@@ -52,7 +52,7 @@ def test_filter_direct_typed_interview_and_summary(browser, page):
     video_checkpoint("recruiter_start")
     panel = login(page)
     panel.get_by_role("button", name="New chat", exact=True).click()
-    page.get_by_role("link").filter(has_text="E2E Alex Software Engineer").first.click()
+    page.get_by_text("E2E Alex Software Engineer", exact=True).first.click()
     expect(
         page.get_by_role("heading", name="E2E Alex Software Engineer", exact=True)
     ).to_be_visible()
@@ -166,7 +166,7 @@ def test_panel_preserves_draft_and_candidate_focus_across_native_navigation(page
     panel.get_by_role("button", name="New chat", exact=True).click()
     composer = panel.get_by_role("textbox", name="Message Jobhunter")
     composer.fill("Unsent recruiting question")
-    page.get_by_role("link").filter(has_text="E2E Blake Software Engineer").first.click()
+    page.get_by_text("E2E Blake Software Engineer", exact=True).first.click()
     expect(
         page.get_by_role("heading", name="E2E Blake Software Engineer", exact=True)
     ).to_be_visible()

@@ -15,7 +15,7 @@ test('root opens native recruitment without an origin request', async () => {
   globalThis.fetch = () => { throw new Error('unexpected upstream'); };
   const response = await worker.fetch(request('/'), env);
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get('location'), '/odoo/hr.applicant');
+  assert.equal(response.headers.get('location'), '/odoo/recruitment-applications');
 });
 
 test('forwards a CSRF-protected POST once with canonical identity and cookies', async () => {

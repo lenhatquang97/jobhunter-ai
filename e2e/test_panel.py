@@ -14,10 +14,10 @@ ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
 def login(page):
     page.set_viewport_size({"width": 1440, "height": 960})
-    page.goto(BASE + "/odoo/action-271?debug=assets")
+    page.goto(BASE + os.getenv("JOBHUNTER_PANEL_PATH", "/odoo/hr.applicant"))
     if "/web/login" in page.url:
-        page.get_by_role("textbox", name="Email", exact=True).fill("workflow.qa1")
-        page.get_by_role("textbox", name="Password", exact=True).fill("workflow-test-only")
+        page.get_by_role("textbox", name="Email", exact=True).fill(os.getenv("JOBHUNTER_PANEL_LOGIN", "workflow.qa1"))
+        page.get_by_role("textbox", name="Password", exact=True).fill(os.getenv("JOBHUNTER_PANEL_PASSWORD", "workflow-test-only"))
         page.get_by_role("button", name="Log in", exact=True).click()
     expect(page.get_by_role("region", name="Jobhunter Chat")).to_be_visible(timeout=45000)
     window = page.get_by_role("button", name="Close Chat Window (ESC)", exact=True)
@@ -98,7 +98,11 @@ def test_filter_direct_typed_interview_and_summary(browser, page):
     workflow.get_by_role("button", name="Recover private interview link", exact=True).click()
     expect(link).to_have_attribute("href", url)
 
-    candidate_context = browser.new_context(viewport={"width": 1000, "height": 850})
+    candidate_options = {"viewport": {"width": 1000, "height": 850}}
+    if os.getenv("JOBHUNTER_PANEL_VIDEO"):
+        candidate_options.update(record_video_dir=str(ARTIFACTS / "candidate-video"),
+                                 record_video_size={"width": 1000, "height": 850})
+    candidate_context = browser.new_context(**candidate_options)
     candidate = candidate_context.new_page()
     try:
         candidate.goto(BASE + url)

@@ -31,7 +31,10 @@ export default {
       return new Response(null, {status:302,headers:{location:'/odoo/hr.applicant','cache-control':'private, no-store'}});
     }
 
-    const destination = new URL(incoming.pathname + incoming.search, upstream);
+    const destination = new URL(upstream);
+    destination.pathname = incoming.pathname;
+    destination.search = incoming.search;
+    if (destination.origin !== upstream.origin) return unavailable(503);
     const headers = new Headers(request.headers);
     for (const key of [...headers.keys()]) {
       if (/^(host|forwarded|x-forwarded-.*|x-real-ip|cf-.*|oai-.*|x-jobhunter-origin-token)$/i.test(key)) headers.delete(key);

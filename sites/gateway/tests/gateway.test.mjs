@@ -97,3 +97,17 @@ test('upstream errors have no private origin details and are never replayed', as
   assert.doesNotMatch(await response.text(), /synthetic-private|cloudfront/);
   assert.equal(calls,1);
 });
+
+test('double-slash and encoded separators never change the fixed upstream origin', async () => {
+  let calls=0;
+  globalThis.fetch = async upstream => {
+    calls++;
+    assert.equal(new URL(upstream.url).origin, 'https://d123.cloudfront.net');
+    return new Response('fixed');
+  };
+  for (const path of ['//attacker.example/path', '/%2f%2fattacker.example/path',
+    '/%5c%5cattacker.example/path']) {
+    assert.equal((await worker.fetch(request(path),env)).status,200);
+  }
+  assert.equal(calls,3);
+});

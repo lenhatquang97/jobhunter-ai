@@ -24,10 +24,24 @@ def configure_keys(openrouter='', openai=''):
     """Load keys from Odoo System Parameters without placing them in candidate responses or browser code."""
     _api_keys.update({'OPENROUTER_API_KEY': openrouter or '', 'OPENAI_API_KEY': openai or ''})
 
-def _post(url, payload, key_env, timeout=60):
+def _key(key_env):
     key = _api_keys.get(key_env) or os.environ.get(key_env)
+    if not key and key_env == 'OPENROUTER_API_KEY':
+        key = _api_keys.get('OPENAI_API_KEY') or os.environ.get('OPENAI_API_KEY')
+    return key
+
+def _base(key_env):
+    return OPENROUTER if key_env == 'OPENROUTER_API_KEY' and _key('OPENROUTER_API_KEY') == (_api_keys.get('OPENROUTER_API_KEY') or os.environ.get('OPENROUTER_API_KEY')) else OPENAI
+
+def _model_for(base, model):
+    if base == OPENAI and isinstance(model, str) and model.startswith('openai/'):
+        return model[7:]
+    return model
+
+def _post(url, payload, key_env, timeout=60):
+    key = _key(key_env)
     if not key:
-        raise AgentError(f'{key_env} is not set')
+        raise AgentError('OPENROUTER_API_KEY or OPENAI_API_KEY is not set')
     req = urllib.request.Request(url, json.dumps(payload).encode(),
                                  {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key})
     try:
@@ -57,7 +71,8 @@ def chunks(text, size=CHUNK, overlap=OVERLAP):
     return out
 
 def embed(texts, model):
-    data = _post(f'{OPENROUTER}/embeddings', {'model': model, 'input': texts}, 'OPENROUTER_API_KEY')
+    base = _base('OPENROUTER_API_KEY')
+    data = _post(f'{base}/embeddings', {'model': _model_for(base, model), 'input': texts}, 'OPENROUTER_API_KEY')
     return [d['embedding'] for d in sorted(data['data'], key=lambda d: d['index'])]
 
 def build_index(docs, model):
@@ -86,12 +101,16 @@ def retrieve(index, qvec, k=TOP_K):
 
 def chat(model, system, user, schema, timeout=60):
     """One OpenRouter call with strict JSON output. require_parameters routes only to providers that honour it."""
-    data = _post(f'{OPENROUTER}/chat/completions', {
+    base = _base('OPENROUTER_API_KEY')
+    payload = {
         'model': model,
         'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
         'response_format': {'type': 'json_schema', 'json_schema': {'name': 'out', 'strict': True, 'schema': schema}},
-        'provider': {'require_parameters': True},  # no temperature: some endpoints reject it
-    }, 'OPENROUTER_API_KEY', timeout)
+    }
+    payload['model'] = _model_for(base, model)
+    if base == OPENROUTER:
+        payload['provider'] = {'require_parameters': True}  # no temperature: some endpoints reject it
+    data = _post(f'{base}/chat/completions', payload, 'OPENROUTER_API_KEY', timeout)
     try:
         content = data['choices'][0]['message']['content']
         return json.loads(re.search(r'\{.*\}', content, re.S).group(0))

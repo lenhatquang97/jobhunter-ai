@@ -29,6 +29,7 @@
                         <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="this.findAhoMenu('t10_jobhunter_chat.menu_chat_workspace')" label="'Jobhunter Chat'" icon="'chat'"/>
                         <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="jobMenu" label="'Vị trí tuyển dụng'" icon="'work'"/>
                         <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="this.findAhoMenu('aho_recruitment_ui.menu_applicant_tracking')" label="'Ứng viên'" icon="'groups'"/>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="this.findAhoMenu('rag_filter_agent.menu_rag_filter')" label="'CV Screening'" icon="'filter_alt'"/>
                     </div>
                     <div class="aho-sidebar-group" t-if="setupMenus.some((menu) => !!menu)">
                         <div class="aho-sidebar-section-label">Thiết lập</div>

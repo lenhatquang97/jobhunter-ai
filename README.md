@@ -10,6 +10,12 @@ the `RECRUITER_TOKEN`, provider keys, and interview settings documented in
 `.env.example`. This standalone entry point is not yet dispatched by the main
 Orchestrator.
 
+The same standalone API also exposes the Schedule test flow under
+`/api/agents/schedule`. It supports dry-run invitations, candidate responses,
+optional Google FreeBusy checks, and explicitly enabled SMTP test delivery.
+Its state is separate from the orchestrated Odoo chat flow and its settings are
+listed in `.env.example`.
+
 Native Odoo Recruitment with a separate **Jobhunter AI** chat panel on the right. The Python orchestrator calls migrated Filter, Interview and Report adapters through the shared Responses gateway. Odoo owns identity, company scope, permissions, source freshness, and private workflow artifacts. This is our own AI layer; it does not route through OdooBot.
 
 The addon is now owned here at `odoo/addons/t10_jobhunter_chat`. Both original RAG addons are copied alongside it as migration references with source revisions/checksums in `odoo/imports.json`; they are not mounted or installed. Active adapted specialists live in `backend/app/agents` and do not rank candidates, score suitability, recommend hiring decisions, change stages, or call legacy recruiting automation.

@@ -652,7 +652,7 @@ class Service:
                         }
                     else:
                         data = filter_data(name, result["data"])
-                        if any(data.values()) and not raw_sources:
+                        if name != "create_job" and any(data.values()) and not raw_sources:
                             raise SafeError(
                                 "missing_sources",
                                 "Odoo did not provide verifiable source references.",
@@ -687,7 +687,7 @@ class Service:
                     await self.event(
                         rid,
                         "tool.completed",
-                        {"name": name, "summary": "Read completed.", "sources": registered},
+                        {"name": name, "summary": "Job created." if name == "create_job" else "Read completed.", "sources": registered},
                         "Orchestrator",
                         call_id,
                     )

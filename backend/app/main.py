@@ -19,7 +19,7 @@ from .store import Store
 def create_app(settings=None, provider=None, bridge=None, adapters=None):
     settings = settings or Settings()
     service = Service(
-        Store(settings.database_url),
+        Store(settings.database_url, connect_args=settings.database_connect_args()),
         settings,
         provider or ResponsesProvider(settings),
         bridge or OdooBridge(settings),

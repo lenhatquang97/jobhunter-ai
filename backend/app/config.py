@@ -1,3 +1,5 @@
+import ssl
+from typing import Literal
 from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, model_validator
@@ -7,6 +9,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="JOBHUNTER_", env_file=".env", extra="ignore")
     database_url: str = "postgresql+asyncpg://jobhunter:jobhunter@postgres/jobhunter"
+    database_ssl_mode: Literal["disable", "verify-full"] = "disable"
+    database_ssl_ca: str | None = None
     bridge_secret: SecretStr = SecretStr("")
     odoo_base_url: str = "http://odoo:8069"
     openai_api_key: SecretStr = SecretStr("")
@@ -27,6 +31,8 @@ class Settings(BaseSettings):
             self.allow_sqlite and self.database_url.startswith("sqlite+aiosqlite://")
         ):
             raise ValueError("PostgreSQL is required outside explicitly enabled tests")
+        if self.database_ssl_mode != "disable" and not self.database_url.startswith("postgresql+"):
+            raise ValueError("Database TLS requires PostgreSQL")
         parsed = urlsplit(self.odoo_base_url)
         if (
             parsed.scheme not in ("http", "https")
@@ -38,3 +44,8 @@ class Settings(BaseSettings):
         ):
             raise ValueError("ODOO_BASE_URL must be a pinned http(s) origin")
         return self
+
+    def database_connect_args(self):
+        if self.database_ssl_mode == "disable":
+            return {}
+        return {"ssl": ssl.create_default_context(cafile=self.database_ssl_ca)}

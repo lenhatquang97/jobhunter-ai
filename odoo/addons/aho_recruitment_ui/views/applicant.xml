@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
     <!-- Extend native views instead of replacing core ATS capabilities. -->
     <record id="applicant_tracking_list" model="ir.ui.view">
@@ -16,7 +16,6 @@
             <field name="job_id" position="attributes"><attribute name="string">Vị trí</attribute><attribute name="optional">show</attribute><attribute name="width">[160]</attribute></field>
             <field name="stage_id" position="attributes"><attribute name="string">Giai đoạn tuyển dụng</attribute><attribute name="optional">show</attribute><attribute name="width">[130]</attribute></field>
             <field name="stage_id" position="after">
-                <field name="aho_interview_state" widget="badge" width="[150]" decoration-success="aho_interview_state == 'reported'" decoration-danger="aho_interview_state == 'error'"/>
                 <field name="aho_next_action" width="[220]"/>
             </field>
             <field name="recruiter_id" position="attributes"><attribute name="string">HR phụ trách</attribute><attribute name="width">[150]</attribute></field>
@@ -42,13 +41,7 @@
             <field name="job_id" position="attributes"><attribute name="string">Vị trí</attribute></field>
             <field name="recruiter_id" position="attributes"><attribute name="string">HR phụ trách</attribute></field>
             <xpath expr="//filter[@name='unassigned']" position="attributes"><attribute name="string">Chưa có HR phụ trách</attribute></xpath>
-            <xpath expr="//filter[@name='unassigned']" position="after">
-                <separator/>
-                <filter name="has_report" string="Có báo cáo phỏng vấn tự động" domain="[('rag_interview_ids.state', '=', 'reported')]"/>
-                <filter name="interview_running" string="Ứng viên đang phỏng vấn" domain="[('rag_interview_ids.state', '=', 'running')]"/>
-                <filter name="interview_error" string="Có phiên bị lỗi" domain="[('rag_interview_ids.state', '=', 'error')]"/>
-            </xpath>
-        </field>
+            </field>
     </record>
     <record id="action_applicant_tracking" model="ir.actions.act_window">
         <field name="name">Theo dõi ứng viên</field>
@@ -67,7 +60,6 @@
         <field name="arch" type="xml">
             <xpath expr="//t[@t-name='card']//field[@name='categ_ids']" position="before">
                 <div class="aho-candidate-ai" groups="hr_recruitment.group_hr_recruitment_user">
-                    <div class="aho-candidate-status"><span class="aho-card-label">Phỏng vấn tự động</span><field name="aho_interview_state" widget="badge" decoration-success="aho_interview_state == 'reported'" decoration-danger="aho_interview_state == 'error'"/></div>
                     <div class="aho-candidate-next"><span class="aho-card-label">Việc tiếp theo</span><field name="aho_next_action"/></div>
                     <div class="aho-candidate-owner" t-if="record.recruiter_id.raw_value"><span class="aho-card-label">HR phụ trách</span><field name="recruiter_id"/></div>
                 </div>

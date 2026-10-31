@@ -20,7 +20,7 @@ CloudFront caches nothing and forwards all native methods, query strings, cookie
 
 ## Deploy and private state
 
-Run scripts from the repository root. Required tools are AWS CLI, Docker, Python3.12+, uv and Terraform1.12+. The tested local `t10-odoo` ARM64 image must have configuration digest `sha256:231edfd90498a990dfbe24fbbdd778819e9c55ce67745f8af5b245bb57112c7b`. `publish_images.py` pushes that exact image to private immutable ECR, then builds the runtime from its ECR digest. The application image copies only `t10_jobhunter_chat`; imported RAG addons are excluded. Terraform uses the final runtime digest rather than a mutable tag.
+Run scripts from the repository root. Required tools are AWS CLI, Docker, Python3.12+, uv and Terraform1.12+. The tested local `t10-odoo` ARM64 image must have configuration digest `sha256:231edfd90498a990dfbe24fbbdd778819e9c55ce67745f8af5b245bb57112c7b`. `publish_images.py` pushes that exact image to private immutable ECR, then builds the runtime from its ECR digest. The application image copies `t10_jobhunter_chat` and the production-compatible `aho_recruitment_ui`; imported RAG addons are excluded. Terraform uses the final runtime digest rather than a mutable tag.
 
 The initial one-time IAM bootstrap uses the authenticated account owner only for IAM user/role/policy setup. Every resource operation runs through the short-lived `jobhunter-deploy` assumed role. The temporary bootstrap permissions are regional and limited to deployment services, the state bucket and named runtime roles. Finalization replaces them with project ARN/tag scopes, restricts PassRole to the app execution/task roles for ECS and backup role for AWS Backup, and attaches an owner-controlled permissions boundary to every runtime role. That boundary prevents workload policies from gaining unrelated access and denies bootstrap/admin/master secrets after initialization. The bootstrap IAM access key is disabled after final verification; deployment session credentials expire, rather than being committed or configured globally.
 
@@ -69,3 +69,30 @@ The account-wide monthly budget is$100, with actual-cost alerts at80% and100% to
 At730hours/month, ARM Fargate compute is approximately$17.02, one task IPv4$3.65, and the ALB base$16.43. Aurora compute is approximately$43.80 at0.5ACU and$87.60 at1ACU. Allow additional storage, I/O, ALB LCUs, EFS/backups, ECR, Secrets Manager, logs and CloudFront traffic. A light-usage estimate near$90–110/month depends on Aurora spending most time near0.5ACU; sustained1ACU exceeds that target. OpenAI, taxes, traffic growth and any unrelated account resources add to the bill. Credits/free-tier discounts are not assumed.
 
 Pricing references checked2026-10-31: [Fargate](https://aws.amazon.com/fargate/pricing/), [Aurora](https://aws.amazon.com/rds/aurora/pricing/), [ALB](https://aws.amazon.com/elasticloadbalancing/pricing/), [public IPv4](https://aws.amazon.com/vpc/pricing/). CloudFront VPC origins currently support WebSockets: [AWS announcement](https://aws.amazon.com/about-aws/whats-new/2026/05/amazon-cloudfront-websockets-vpc-origins/).
+
+## Recruitment UI maintenance — 2026-10-31
+
+The UI addon depends on native Recruitment and Jobhunter Chat, with no imported
+RAG addons. Its loaded views omit legacy voice sessions, candidate scores and
+company RAG settings. The visual sidebar/cards/styles remain, with an explicit
+Jobhunter Chat navigation link. Applicant guidance uses native record state.
+
+For the first UI installation, publish an immutable image and review a complete
+Terraform maintenance plan. Stop the service by applying `desired_count=0`, wait
+for all service tasks to stop, and run the new app task definition once with the
+container command override `["install-ui"]`. This maintenance command uses only
+the existing Odoo database owner and runtime secret; it does not run the retired
+initializer, seed data, start cron or send mail. Require exit code zero before
+applying the reviewed service-only plan with `desired_count=1`. Subsequent UI
+model/view upgrades require an explicit module upgrade maintenance operation.
+
+Private deployment sessions remain in `.state/aws-session.json` mode 0600.
+A temporary bootstrap-user key may be used solely to assume the existing scoped
+deployment role; delete that temporary key immediately after obtaining the
+session. Never reactivate the retired initializer or broaden the role policy.
+
+The application task definition uses `skip_destroy=true` to retain earlier ECS
+revisions for rollback. When enabling this on an existing deployment, first
+apply a reviewed plan using the current image so the retention setting is saved
+before requesting an image replacement. This avoids deregistering the prior
+revision and needs no broader deployment-role permissions.

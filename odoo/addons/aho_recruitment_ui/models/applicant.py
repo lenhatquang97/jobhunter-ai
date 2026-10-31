@@ -23,21 +23,9 @@ class HrApplicant(models.Model):
              'sau đó viết báo cáo tham khảo cho HR. Phiên mới nhất được hiển thị.')
     aho_next_action = fields.Char('Việc tiếp theo', compute='_compute_aho_interview_summary')
 
-    @api.depends('active', 'recruiter_id', 'stage_id', 'stage_id.hired_stage',
-                 'rag_interview_ids', 'rag_interview_ids.state')
-    def _compute_aho_interview_summary(self):
-        actions = {
-            'none': 'Xem hồ sơ, mời phỏng vấn tự động nếu phù hợp',
-            'ready': 'Chia sẻ link và theo dõi phản hồi của ứng viên',
-            'running': 'Chờ ứng viên hoàn tất phỏng vấn',
-            'done': 'Chờ AI tạo báo cáo',
-            'reported': 'Đọc báo cáo và quyết định giai đoạn tiếp theo',
-            'error': 'Kiểm tra lỗi của phiên phỏng vấn',
-        }
+    @api.depends('active', 'recruiter_id', 'stage_id', 'stage_id.hired_stage')
+    def _compute_aho_next_action(self):
         for applicant in self:
-            session = applicant.rag_interview_ids.sorted('id', reverse=True)[:1]
-            state = session.state if session else 'none'
-            applicant.aho_interview_state = state
             if not applicant.active:
                 applicant.aho_next_action = 'Hồ sơ đã lưu trữ'
             elif applicant.stage_id.hired_stage:
@@ -45,4 +33,4 @@ class HrApplicant(models.Model):
             elif not applicant.recruiter_id:
                 applicant.aho_next_action = 'Cần phân công HR phụ trách'
             else:
-                applicant.aho_next_action = actions.get(state, 'Xem hồ sơ ứng viên')
+                applicant.aho_next_action = 'Xem hồ sơ và bằng chứng trong Jobhunter Chat'

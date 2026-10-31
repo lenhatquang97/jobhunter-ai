@@ -1,0 +1,7 @@
+[
+  {"name": "Python fundamentals", "description": "Core Python (data types, functions, errors, list/dict usage). 1 = wrong or cannot explain basics. 3 = correct textbook explanation. 5 = correct and backed by own working code or a real project detail.", "max_score": 5},
+  {"name": "REST API and HTTP", "description": "HTTP methods, status codes, REST design, FastAPI. Any wrong core concept (e.g. PUT vs POST) caps the score at 2. 3 = correct basics. 5 = correct and explains own API design choices.", "max_score": 5},
+  {"name": "SQL and databases", "description": "Joins, indexes, query design. Any wrong core concept (e.g. INNER vs LEFT JOIN reversed) caps the score at 2. 3 = correct basics. 5 = correct and gives a real case (slow query, index chosen and why).", "max_score": 5},
+  {"name": "Problem solving", "description": "How the candidate approaches a problem in any answer (debugging, merge conflicts, error handling). 1 = vague. 3 = clear steps. 5 = clear steps plus trade-offs or honest limits.", "max_score": 5},
+  {"name": "Collaboration and Git", "description": "Git branches/PRs, merge conflicts, teamwork. 1 = only names commands. 3 = describes own workflow. 5 = describes team practices (reviews, PRs, communication).", "max_score": 5}
+]

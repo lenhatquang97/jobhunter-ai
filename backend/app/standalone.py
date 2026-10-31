@@ -34,8 +34,8 @@ load_dotenv()
 
 # ponytail: model ids from env so they can be swapped without a release.
 DEFAULTS = {
-    'turn_model': 'openai/gpt-4.1-mini',              # override after verifying the configured provider account
-    'report_model': 'openai/gpt-4.1-mini',
+    'turn_model': 'openai/gpt-6.1-sol',              # override after verifying the configured provider account
+    'report_model': 'openai/gpt-6.1-sol',
     'embed_model': 'openai/text-embedding-3-large',   # multilingual retrieval, 3072 dims
     'realtime_model': 'gpt-realtime',
     'realtime_voice': 'marin',

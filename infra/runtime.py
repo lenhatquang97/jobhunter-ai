@@ -73,6 +73,7 @@ def write_config():
     path.chmod(0o600)
     with path.open("w") as handle:
         parser.write(handle)
+    os.environ["JOBHUNTER_PUBLIC_URL"] = public_url
     os.environ["JOBHUNTER_API_URL"] = "http://127.0.0.1:8000"
     os.environ["JOBHUNTER_BRIDGE_SECRET"] = config["bridge_secret"]
     os.environ.pop("JOBHUNTER_TEST_CAPTURE", None)

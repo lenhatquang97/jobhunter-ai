@@ -73,6 +73,24 @@ class JobhunterChat(http.Controller):
         request.update_env(user=principal['user_id'], context={'allowed_company_ids': principal['company_ids']}, su=False)
         return request.env['jobhunter.chat.bridge'], principal
 
+    def _interview_url(self, path):
+        if not isinstance(path, str) or not re.fullmatch(r'/jobhunter/interview/[A-Za-z0-9_-]{43}', path):
+            raise ValidationError('Invalid interview link.')
+        # Deployment-owned metadata only. Never derive a public share origin
+        # from request headers or internal callback/health-check hostnames.
+        config = request.env['ir.config_parameter'].sudo()
+        origin = (os.getenv('JOBHUNTER_PUBLIC_URL') or os.getenv('PUBLIC_URL')
+                  or config.get_str('jobhunter_chat.public_url', '')).rstrip('/')
+        if not origin:
+            return path  # Local development keeps a same-origin relative link.
+        parsed = urlsplit(origin)
+        if (parsed.scheme != 'https' or not parsed.hostname
+                or parsed.hostname.lower() in ('localhost', '::1')
+                or parsed.hostname.startswith('127.') or parsed.hostname.endswith('.localhost')
+                or parsed.username or parsed.password or parsed.query or parsed.fragment or parsed.path):
+            raise ValidationError('Configure the public HTTPS Odoo URL before sharing interview links.')
+        return origin + path
+
     def _config(self):
         config = request.env['ir.config_parameter'].sudo()
         base = os.getenv('JOBHUNTER_API_URL') or config.get_str('jobhunter_chat.api_url', '')
@@ -152,7 +170,10 @@ class JobhunterChat(http.Controller):
             if operation == 'workflow.interview.create':
                 strict(arguments, ('case_id', 'guide_version', 'client_request_id'))
                 case = bridge._record('jobhunter.chat.case', positive(arguments['case_id']))
-                return case._create_direct(arguments['guide_version'], arguments['client_request_id'])
+                with bridge.env.cr.savepoint():
+                    result = case._create_direct(arguments['guide_version'], arguments['client_request_id'])
+                    result['interview_url'] = self._interview_url(result['interview_url'])
+                    return result
             if operation in ('workflow.criteria.approve', 'workflow.revoke'):
                 strict(arguments, ('case_id', 'version') if operation.endswith('approve') else ('case_id', 'session_id'))
                 case = bridge._record('jobhunter.chat.case', positive(arguments['case_id']))

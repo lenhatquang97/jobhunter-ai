@@ -15,7 +15,7 @@ OPENROUTER = 'https://openrouter.ai/api/v1'
 OPENAI = 'https://api.openai.com/v1'
 CHUNK, OVERLAP, TOP_K = 900, 150, 6
 MAX_ANSWER, MAX_QUESTION = 4000, 600
-DEFAULT_MODEL = 'openai/gpt-4.1-mini'
+DEFAULT_MODEL = 'openai/gpt-6.1-sol'
 
 class AgentError(Exception):
     pass

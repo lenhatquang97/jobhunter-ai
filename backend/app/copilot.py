@@ -101,7 +101,7 @@ FEEDBACK_SCHEMA = {
 
 
 def _model() -> str:
-    return os.environ.get("OPENAI_MODEL") or os.environ.get("COPILOT_MODEL") or "gpt-4.1-mini"
+    return os.environ.get("OPENAI_MODEL") or os.environ.get("COPILOT_MODEL") or "gpt-6.1-sol"
 
 
 def _chat(system: str, user: str, schema: dict, timeout: int = 60) -> dict:

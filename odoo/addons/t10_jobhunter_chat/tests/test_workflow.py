@@ -576,6 +576,40 @@ class TestCandidateWorkflow(TransactionCase):
         self.direct(case)
         self.assertEqual(case._public()['direct_guide']['version'], 3)
 
+    def test_direct_browser_link_uses_canonical_https_origin(self):
+        from unittest.mock import patch, Mock
+        from ..controllers import chat
+        from ..controllers.chat import JobhunterChat
+        case = self.direct()
+        req = Mock(env=self.bridge.env)
+        req.validate_csrf.return_value = True
+        controller = JobhunterChat()
+        args = {'case_id': case.id, 'guide_version': 1, 'client_request_id': str(uuid4())}
+        with patch.dict('os.environ', {'JOBHUNTER_PUBLIC_URL': 'https://jobs.example.invalid/', 'PUBLIC_URL': 'http://localhost:8000'}), patch.object(chat, 'request', req), patch.object(controller, '_scope', return_value=(self.bridge, self.bridge._principal())):
+            result = controller.rpc('workflow.interview.create', args, csrf_token='synthetic-csrf')
+            self.assertTrue(result['interview_url'].startswith('https://jobs.example.invalid/jobhunter/interview/'))
+            repeated = controller.rpc('workflow.interview.create', args, csrf_token='synthetic-csrf')
+            self.assertEqual(result['interview_url'], repeated['interview_url'])
+            self.assertEqual(len(case.session_ids), 1)
+
+    def test_invalid_public_origin_rolls_back_link_creation(self):
+        from unittest.mock import patch, Mock
+        from ..controllers import chat
+        from ..controllers.chat import JobhunterChat
+        case = self.direct()
+        req = Mock(env=self.bridge.env)
+        req.validate_csrf.return_value = True
+        controller = JobhunterChat()
+        args = {'case_id': case.id, 'guide_version': 1, 'client_request_id': str(uuid4())}
+        with patch.dict('os.environ', {'JOBHUNTER_PUBLIC_URL': 'http://localhost:5173', 'PUBLIC_URL': ''}), patch.object(chat, 'request', req), patch.object(controller, '_scope', return_value=(self.bridge, self.bridge._principal())):
+            result = controller.rpc('workflow.interview.create', args, csrf_token='synthetic-csrf')
+            self.assertEqual(result['error']['code'], 'invalid_arguments')
+            self.assertFalse(case.session_ids)
+            for origin in ('https://localhost', 'https://127.0.0.1', 'https://user:pass@jobs.example.invalid', 'https://jobs.example.invalid/path', 'https://jobs.example.invalid?token=invalid'):
+                with patch.dict('os.environ', {'JOBHUNTER_PUBLIC_URL': origin}):
+                    with self.assertRaises(ValidationError):
+                        controller._interview_url('/jobhunter/interview/' + 'A' * 43)
+
     def test_direct_browser_operation_enforces_csrf_and_keeps_model_boundary_link_free(self):
         from unittest.mock import patch, Mock
         from ..controllers import chat

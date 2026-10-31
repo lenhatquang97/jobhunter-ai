@@ -501,7 +501,7 @@ class CandidateCase(models.Model):
         if capture:
             return os.getenv('JOBHUNTER_PUBLIC_URL', 'http://localhost:8069').rstrip('/'), True
         params = self.env['ir.config_parameter'].sudo()
-        base = params.get_str('jobhunter_chat.public_url', '').rstrip('/')
+        base = (os.getenv('JOBHUNTER_PUBLIC_URL') or os.getenv('PUBLIC_URL') or params.get_str('jobhunter_chat.public_url', '')).rstrip('/')
         parsed = urlsplit(base)
         if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment or parsed.path:
             raise ValidationError('Needs input: configure a public HTTPS interview URL and SMTP before sending.')

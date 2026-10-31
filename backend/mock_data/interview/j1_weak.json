@@ -1,0 +1,177 @@
+[
+  {
+    "speaker": "techlead",
+    "text": "Hi, thanks for coming in today. How are you doing?",
+    "start_sec": 0.0
+  },
+  {
+    "speaker": "candidate",
+    "text": "Hi, thanks for having me. I'm doing well, a bit nervous but excited.",
+    "start_sec": 4.7
+  },
+  {
+    "speaker": "techlead",
+    "text": "That's totally normal. So, before we dive in, could you tell me a little about yourself and your background?",
+    "start_sec": 9.95
+  },
+  {
+    "speaker": "candidate",
+    "text": "Sure. I recently graduated in computer science and did some internships where I worked a bit with Python and web development.",
+    "start_sec": 17.4
+  },
+  {
+    "speaker": "techlead",
+    "text": "Great. So, let's talk about Python first. Can you tell me what a list comprehension is and when you might use it?",
+    "start_sec": 26.4
+  },
+  {
+    "speaker": "candidate",
+    "text": "Yeah, it's like a way to create lists in a shorter way, like a loop inside brackets. I use it when I want to make a new list from another list.",
+    "start_sec": 34.6
+  },
+  {
+    "speaker": "techlead",
+    "text": "Exactly. Can you give me a simple example of a list comprehension?",
+    "start_sec": 44.8
+  },
+  {
+    "speaker": "candidate",
+    "text": "Um, like if I have a list of numbers, I can do [x for x in numbers] to copy it, or maybe [x*2 for x in numbers] to double each number.",
+    "start_sec": 49.95
+  },
+  {
+    "speaker": "techlead",
+    "text": "Perfect. Moving on, have you worked with FastAPI before? What is it used for?",
+    "start_sec": 59.6
+  },
+  {
+    "speaker": "candidate",
+    "text": "Yes, a little. FastAPI is a Python framework to build APIs quickly. It's good for making web services.",
+    "start_sec": 66.95
+  },
+  {
+    "speaker": "techlead",
+    "text": "Right. Can you tell me what HTTP methods you know and what they do?",
+    "start_sec": 75.8
+  },
+  {
+    "speaker": "candidate",
+    "text": "Sure. There's GET to get data, POST to create something, and I think PUT is also for creating, or maybe updating? I'm not sure.",
+    "start_sec": 81.95
+  },
+  {
+    "speaker": "techlead",
+    "text": "Good start. Actually, POST is usually for creating, and PUT is for updating or replacing a resource. Can you explain why we use different methods?",
+    "start_sec": 91.4
+  },
+  {
+    "speaker": "candidate",
+    "text": "I guess it's to tell the server what kind of action we want, so it handles the request properly.",
+    "start_sec": 101.85
+  },
+  {
+    "speaker": "techlead",
+    "text": "Exactly. Now, what about HTTP status codes? Can you name a few and what they mean?",
+    "start_sec": 108.2
+  },
+  {
+    "speaker": "candidate",
+    "text": "There's 200 for success, 404 for not found, and 500 for server error. Maybe 201 is for created?",
+    "start_sec": 115.8
+  },
+  {
+    "speaker": "techlead",
+    "text": "Yes, 201 means a resource was created successfully. Good. Let's switch to SQL. Can you explain what a JOIN is?",
+    "start_sec": 125.5
+  },
+  {
+    "speaker": "candidate",
+    "text": "A JOIN combines rows from two tables based on a related column. Like, if you have users and orders, you can join them to see which user made which order.",
+    "start_sec": 135.45
+  },
+  {
+    "speaker": "techlead",
+    "text": "Right. What's the difference between INNER JOIN and LEFT JOIN?",
+    "start_sec": 145.35
+  },
+  {
+    "speaker": "candidate",
+    "text": "I think INNER JOIN shows all rows from both tables, and LEFT JOIN shows only matching rows from the left table.",
+    "start_sec": 151.1
+  },
+  {
+    "speaker": "techlead",
+    "text": "Actually, INNER JOIN returns only matching rows, while LEFT JOIN returns all rows from the left table and matching ones from the right. Does that make sense?",
+    "start_sec": 158.95
+  },
+  {
+    "speaker": "candidate",
+    "text": "Oh, yes, that makes sense now. Thanks for clarifying.",
+    "start_sec": 168.95
+  },
+  {
+    "speaker": "techlead",
+    "text": "No problem. What about indexes in databases? Why are they important?",
+    "start_sec": 173.95
+  },
+  {
+    "speaker": "candidate",
+    "text": "Indexes help speed up queries by making it faster to find data, like an index in a book.",
+    "start_sec": 180.45
+  },
+  {
+    "speaker": "techlead",
+    "text": "Exactly. Lastly, have you used Git? How do you usually manage your code changes?",
+    "start_sec": 187.2
+  },
+  {
+    "speaker": "candidate",
+    "text": "Yes, I use Git to commit changes and push them to a remote repository. Sometimes I create branches for new features.",
+    "start_sec": 193.75
+  },
+  {
+    "speaker": "techlead",
+    "text": "Great. How do you handle merge conflicts if they happen?",
+    "start_sec": 203.1
+  },
+  {
+    "speaker": "candidate",
+    "text": "I try to understand the conflicting changes and edit the files to fix them, then commit again.",
+    "start_sec": 207.6
+  },
+  {
+    "speaker": "techlead",
+    "text": "Good approach. Do you have any questions for me about the team or the role?",
+    "start_sec": 214.05
+  },
+  {
+    "speaker": "candidate",
+    "text": "Yes, could you tell me a bit about the team I'll be working with?",
+    "start_sec": 218.9
+  },
+  {
+    "speaker": "techlead",
+    "text": "Sure. Our backend team is small but friendly, mostly mid-level engineers. We focus on collaboration and learning, so you'll get good support.",
+    "start_sec": 223.25
+  },
+  {
+    "speaker": "candidate",
+    "text": "That sounds great. What are the next steps in the interview process?",
+    "start_sec": 233.75
+  },
+  {
+    "speaker": "techlead",
+    "text": "We'll review all candidates and get back to you within a week. If all goes well, there will be a technical task next.",
+    "start_sec": 238.6
+  },
+  {
+    "speaker": "candidate",
+    "text": "Thank you for the info and for your time today.",
+    "start_sec": 248.05
+  },
+  {
+    "speaker": "techlead",
+    "text": "You're welcome. It was nice meeting you. Have a great day!",
+    "start_sec": 252.5
+  }
+]

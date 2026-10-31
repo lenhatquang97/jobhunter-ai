@@ -1,0 +1,303 @@
+{
+  "provider": "assemblyai",
+  "transcript_id": "ba8d2081-19ac-475d-aad2-c73ab6f36220",
+  "target_language": "vi",
+  "turns": [
+    {
+      "id": "turn-0",
+      "provider_speaker": "A",
+      "text": "Hi, thanks for coming in today. How are you doing?",
+      "translated_text": "Chào bạn, cảm ơn bạn đã đến hôm nay. Bạn có khỏe không?",
+      "start_ms": 240,
+      "end_ms": 3212
+    },
+    {
+      "id": "turn-1",
+      "provider_speaker": "B",
+      "text": "Hi, I'm doing well, thank you. Excited to be here and talk about the backend engineer role.",
+      "translated_text": "Chào bạn, tôi khỏe, cảm ơn bạn. Rất vui được ở đây và trao đổi về vị trí kỹ sư backend.",
+      "start_ms": 4513,
+      "end_ms": 9734
+    },
+    {
+      "id": "turn-2",
+      "provider_speaker": "A",
+      "text": "Great to hear. So, before we dive into the technical stuff, can you tell me a little about yourself and your background?",
+      "translated_text": "Rất vui được nghe. Vậy, trước khi đi sâu vào các vấn đề kỹ thuật, bạn có thể giới thiệu đôi chút về bản thân và nền tảng của mình được không?",
+      "start_ms": 11680,
+      "end_ms": 18095
+    },
+    {
+      "id": "turn-3",
+      "provider_speaker": "B",
+      "text": "Sure. I recently graduated with a degree in computer science. During my studies, I did an internship where I worked on a small web app backend using Python and FastAPI.",
+      "translated_text": "Chắc chắn rồi. Tôi vừa tốt nghiệp với bằng khoa học máy tính. Trong quá trình học, tôi đã thực tập tại một công ty và làm việc với phần backend của một ứng dụng web nhỏ sử dụng Python và FastAPI.",
+      "start_ms": 19476,
+      "end_ms": 31193
+    },
+    {
+      "id": "turn-4",
+      "provider_speaker": "A",
+      "text": "That's a solid start. What made you interested in backend development specifically?",
+      "translated_text": "Đó là một khởi đầu vững chắc. Điều gì đã khiến bạn đặc biệt quan tâm đến phát triển backend?",
+      "start_ms": 32349,
+      "end_ms": 37552
+    },
+    {
+      "id": "turn-5",
+      "provider_speaker": "B",
+      "text": "I enjoy working with data and logic behind the scenes. I like how backend connects the frontend with databases and handles the core functionality.",
+      "translated_text": "Tôi thích làm việc với dữ liệu và logic đằng sau hậu trường. Tôi thích cách mà backend kết nối frontend với cơ sở dữ liệu và xử lý các chức năng cốt lõi.",
+      "start_ms": 38772,
+      "end_ms": 47475
+    },
+    {
+      "id": "turn-6",
+      "provider_speaker": "A",
+      "text": "Makes sense. Let's talk Python a bit. Can you explain what a Python dictionary is and give a simple example?",
+      "translated_text": "Hợp lý. Chúng ta hãy nói một chút về Python. Bạn có thể giải thích từ điển Python là gì và cho một ví dụ đơn giản không?",
+      "start_ms": 48567,
+      "end_ms": 54700
+    },
+    {
+      "id": "turn-7",
+      "provider_speaker": "B",
+      "text": "A dictionary is a collection of key-value pairs. For example, I used a dictionary to store user info like name Alice, age 25, in my internship project.",
+      "translated_text": "Từ điển là một tập hợp các cặp khóa-giá trị. Ví dụ, tôi đã sử dụng một từ điển để lưu trữ thông tin người dùng như tên Alice, tuổi 25, trong dự án thực tập của mình.",
+      "start_ms": 55728,
+      "end_ms": 66454
+    },
+    {
+      "id": "turn-8",
+      "provider_speaker": "A",
+      "text": "Good. How do you access a value in a dictionary?",
+      "translated_text": "Tốt. Làm thế nào để truy cập một giá trị trong từ điển?",
+      "start_ms": 67449,
+      "end_ms": 70917
+    },
+    {
+      "id": "turn-9",
+      "provider_speaker": "B",
+      "text": "You use the key inside square brackets, like dict to get Alice.",
+      "translated_text": "Bạn sử dụng khóa bên trong dấu ngoặc vuông, như `dict` để lấy Alice.",
+      "start_ms": 72009,
+      "end_ms": 76168
+    },
+    {
+      "id": "turn-10",
+      "provider_speaker": "A",
+      "text": "Right. What happens if you try to access a key that doesn't exist?",
+      "translated_text": "Đúng vậy. Điều gì sẽ xảy ra nếu bạn cố gắng truy cập một khóa không tồn tại?",
+      "start_ms": 78140,
+      "end_ms": 81916
+    },
+    {
+      "id": "turn-11",
+      "provider_speaker": "B",
+      "text": "It raises a KeyError. To avoid that, I sometimes use the .get method, which returns None or a default value if the key is missing.",
+      "translated_text": "Nó sẽ gây ra lỗi KeyError. Để tránh điều đó, đôi khi tôi sử dụng phương thức .get, phương thức này sẽ trả về None hoặc một giá trị mặc định nếu khóa bị thiếu.",
+      "start_ms": 83442,
+      "end_ms": 90937
+    },
+    {
+      "id": "turn-12",
+      "provider_speaker": "A",
+      "text": "Exactly. Now, you mentioned FastAPI. Can you briefly describe what FastAPI is used for?",
+      "translated_text": "Chính xác. Bây giờ, bạn đã đề cập đến FastAPI. Bạn có thể mô tả ngắn gọn FastAPI được sử dụng để làm gì không?",
+      "start_ms": 92386,
+      "end_ms": 99168
+    },
+    {
+      "id": "turn-13",
+      "provider_speaker": "B",
+      "text": "FastAPI is a Python web framework to build APIs quickly. I used it to create REST endpoints for my project.",
+      "translated_text": "FastAPI là một framework web Python để xây dựng API một cách nhanh chóng. Tôi đã sử dụng nó để tạo các điểm cuối REST cho dự án của mình.",
+      "start_ms": 100310,
+      "end_ms": 107874
+    },
+    {
+      "id": "turn-14",
+      "provider_speaker": "A",
+      "text": "Nice! What HTTP methods have you worked with in your APIs?",
+      "translated_text": "Tuyệt vời! Bạn đã làm việc với những phương thức HTTP nào trong các API của mình?",
+      "start_ms": 110240,
+      "end_ms": 113465
+    },
+    {
+      "id": "turn-15",
+      "provider_speaker": "B",
+      "text": "Mostly GET to retrieve data and POST to create new records.",
+      "translated_text": "Chủ yếu sử dụng GET để truy xuất dữ liệu và POST để tạo bản ghi mới.",
+      "start_ms": 115500,
+      "end_ms": 119215
+    },
+    {
+      "id": "turn-16",
+      "provider_speaker": "A",
+      "text": "Good. Can you explain the difference between GET and POST?",
+      "translated_text": "Tốt. Bạn có thể giải thích sự khác biệt giữa GET và POST không?",
+      "start_ms": 120298,
+      "end_ms": 124269
+    },
+    {
+      "id": "turn-17",
+      "provider_speaker": "B",
+      "text": "GET requests data from the server and should not change anything. POST sends data to the server to create or update resources.",
+      "translated_text": "Yêu cầu GET lấy dữ liệu từ máy chủ và không được thay đổi bất cứ điều gì. POST gửi dữ liệu đến máy chủ để tạo hoặc cập nhật tài nguyên.",
+      "start_ms": 125362,
+      "end_ms": 133107
+    },
+    {
+      "id": "turn-18",
+      "provider_speaker": "A",
+      "text": "Exactly. What HTTP status codes do you usually return for successful GET and POST requests?",
+      "translated_text": "Chính xác. Bạn thường trả về mã trạng thái HTTP nào cho các yêu cầu GET và POST thành công?",
+      "start_ms": 135060,
+      "end_ms": 140525
+    },
+    {
+      "id": "turn-19",
+      "provider_speaker": "B",
+      "text": "For GET, usually 200 OK. For POST, 201 Created, if a new resource is made.",
+      "translated_text": "Đối với GET, thường là 200 OK. Đối với POST, 201 Created, nếu một tài nguyên mới được tạo.",
+      "start_ms": 141640,
+      "end_ms": 148039
+    },
+    {
+      "id": "turn-20",
+      "provider_speaker": "A",
+      "text": "Great. Let's switch to SQL. Can you explain what a join is in SQL?",
+      "translated_text": "Tuyệt vời. Chúng ta hãy chuyển sang SQL. Bạn có thể giải thích `join` trong SQL là gì không?",
+      "start_ms": 149160,
+      "end_ms": 153675
+    },
+    {
+      "id": "turn-21",
+      "provider_speaker": "B",
+      "text": "A join combines rows from two or more tables based on related columns, For example, joining users and orders tables on user ID.",
+      "translated_text": "Một phép nối (join) kết hợp các hàng từ hai hoặc nhiều bảng dựa trên các cột liên quan. Ví dụ, nối bảng người dùng (users) và bảng đơn hàng (orders) dựa trên mã định danh người dùng (user ID).",
+      "start_ms": 155437,
+      "end_ms": 164283
+    },
+    {
+      "id": "turn-22",
+      "provider_speaker": "A",
+      "text": "Good example. What types of joins do you know?",
+      "translated_text": "Ví dụ hay. Bạn biết những loại kết nối nào?",
+      "start_ms": 165426,
+      "end_ms": 168792
+    },
+    {
+      "id": "turn-23",
+      "provider_speaker": "B",
+      "text": "I know INNER JOIN, which returns matching rows, and LEFT JOIN, which returns all rows from the left table and matching from the right.",
+      "translated_text": "Tôi biết INNER JOIN, trả về các hàng khớp nhau, và LEFT JOIN, trả về tất cả các hàng từ bảng bên trái và các hàng khớp từ bảng bên phải.",
+      "start_ms": 170396,
+      "end_ms": 177803
+    },
+    {
+      "id": "turn-24",
+      "provider_speaker": "A",
+      "text": "Perfect. Have you worked with indexes in databases?",
+      "translated_text": "Tuyệt vời. Bạn đã từng làm việc với các chỉ mục trong cơ sở dữ liệu chưa?",
+      "start_ms": 179638,
+      "end_ms": 182528
+    },
+    {
+      "id": "turn-25",
+      "provider_speaker": "B",
+      "text": "I learned that indexes speed up queries by allowing faster lookups on columns, like indexing user ID to quickly find users.",
+      "translated_text": "Tôi đã học được rằng các chỉ mục giúp tăng tốc các truy vấn bằng cách cho phép tra cứu nhanh hơn trên các cột, giống như lập chỉ mục ID người dùng để nhanh chóng tìm thấy người dùng.",
+      "start_ms": 184490,
+      "end_ms": 193415
+    },
+    {
+      "id": "turn-26",
+      "provider_speaker": "A",
+      "text": "Exactly. Lastly, how comfortable are you with Git?",
+      "translated_text": "Chính xác. Cuối cùng, bạn cảm thấy thoải mái như thế nào với Git?",
+      "start_ms": 194797,
+      "end_ms": 198235
+    },
+    {
+      "id": "turn-27",
+      "provider_speaker": "B",
+      "text": "I used Git for version control during my internship. I know how to clone repos, commit changes, push, and create branches.",
+      "translated_text": "Trong thời gian thực tập, tôi đã sử dụng Git để kiểm soát phiên bản. Tôi biết cách sao chép kho lưu trữ, cam kết các thay đổi, đẩy và tạo nhánh.",
+      "start_ms": 199537,
+      "end_ms": 207073
+    },
+    {
+      "id": "turn-28",
+      "provider_speaker": "A",
+      "text": "Good to hear. Have you ever resolved merge conflicts?",
+      "translated_text": "Rất vui được nghe. Bạn đã từng giải quyết xung đột hợp nhất (merge conflicts) bao giờ chưa?",
+      "start_ms": 208551,
+      "end_ms": 211684
+    },
+    {
+      "id": "turn-29",
+      "provider_speaker": "B",
+      "text": "Yes, Once, I carefully reviewed conflicting files and manually merged changes before committing.",
+      "translated_text": "Vâng, có lần, tôi đã xem xét cẩn thận các tệp mâu thuẫn và tự mình hợp nhất các thay đổi trước khi cam kết.",
+      "start_ms": 212873,
+      "end_ms": 218536
+    },
+    {
+      "id": "turn-30",
+      "provider_speaker": "A",
+      "text": "That's important. Do you have any questions for me about the team or role?",
+      "translated_text": "Điều đó rất quan trọng. Bạn có câu hỏi nào cho tôi về đội ngũ hoặc vai trò này không?",
+      "start_ms": 220140,
+      "end_ms": 224068
+    },
+    {
+      "id": "turn-31",
+      "provider_speaker": "B",
+      "text": "Yes, could you tell me more about the team I'll be working with and the projects I'll contribute to?",
+      "translated_text": "Vâng, anh/chị có thể cho tôi biết thêm về đội nhóm tôi sẽ làm việc cùng và các dự án tôi sẽ đóng góp không?",
+      "start_ms": 225389,
+      "end_ms": 230481
+    },
+    {
+      "id": "turn-32",
+      "provider_speaker": "A",
+      "text": "Sure. Our backend team is small but collaborative, working mainly on APIs for our mobile app. You'll get to work closely with front-end and QA engineers.",
+      "translated_text": "Chắc chắn rồi. Đội ngũ backend của chúng tôi tuy nhỏ nhưng rất hợp tác, chủ yếu làm việc trên các API cho ứng dụng di động của chúng tôi. Bạn sẽ có cơ hội làm việc chặt chẽ với các kỹ sư front-end và QA.",
+      "start_ms": 232337,
+      "end_ms": 242218
+    },
+    {
+      "id": "turn-33",
+      "provider_speaker": "B",
+      "text": "That sounds great. What are the next steps in the hiring process?",
+      "translated_text": "Nghe thật tuyệt. Các bước tiếp theo trong quy trình tuyển dụng là gì?",
+      "start_ms": 243610,
+      "end_ms": 246916
+    },
+    {
+      "id": "turn-34",
+      "provider_speaker": "A",
+      "text": "We'll review all candidates and get back to you within a week. If all goes well, there will be a technical assignment next.",
+      "translated_text": "Chúng tôi sẽ xem xét tất cả các ứng viên và phản hồi lại cho quý vị trong vòng một tuần. Nếu mọi việc thuận lợi, bước tiếp theo sẽ là một bài tập kỹ thuật.",
+      "start_ms": 249084,
+      "end_ms": 256335
+    },
+    {
+      "id": "turn-35",
+      "provider_speaker": "B",
+      "text": "Thank you for the info and the interview. I look forward to hearing from you.",
+      "translated_text": "Cảm ơn bạn đã cung cấp thông tin và buổi phỏng vấn. Tôi mong nhận được phản hồi từ bạn.",
+      "start_ms": 257850,
+      "end_ms": 261522
+    },
+    {
+      "id": "turn-36",
+      "provider_speaker": "A",
+      "text": "Thank you for coming. Have a great day!",
+      "translated_text": "Cảm ơn quý vị đã đến. Chúc quý vị một ngày tốt lành!",
+      "start_ms": 263362,
+      "end_ms": 265738
+    }
+  ]
+}

@@ -21,11 +21,17 @@ services:
       PASSWORD: ${JOBHUNTER_LOCAL_ODOO_PASSWORD:-panel-local-only}
       JOBHUNTER_API_URL: http://api:8000
       JOBHUNTER_BRIDGE_SECRET: ${JOBHUNTER_BRIDGE_SECRET:-panel-local-bridge-only}
-    ports: ['127.0.0.1:${JOBHUNTER_ODOO_PORT:-28069}:8069']
+    ports: ['127.0.0.1:${JOBHUNTER_ODOO_PORT:-8069}:8069']
     volumes:
       - ./odoo/addons/t10_jobhunter_chat:/mnt/extra-addons/t10_jobhunter_chat:ro
+      - ./odoo/addons/rag_filter_agent:/mnt/extra-addons/rag_filter_agent:ro
+      - ./odoo/addons/rag_interview_agent:/mnt/extra-addons/rag_interview_agent:ro
+      - ./odoo/addons/aho_recruitment_ui:/mnt/extra-addons/aho_recruitment_ui:ro
       - panel-odoo-data:/var/lib/odoo
-    command: ['--database=jobhunter_e2e', '--db-filter=^jobhunter_e2e$', '--without-demo=all', '--dev=xml,qweb']
+    # On a fresh AWS volume, initialize the standard Recruitment app and
+    # Jobhunter UI/chat modules automatically. On an existing database Odoo
+    # leaves already-installed modules unchanged.
+    command: ['--database=jobhunter_e2e', '--db-filter=^jobhunter_e2e$', '--without-demo=all', '--init=hr_recruitment,rag_filter_agent,rag_interview_agent,t10_jobhunter_chat,aho_recruitment_ui', '--dev=xml,qweb']
   backend-db:
     image: postgres:16
     environment:

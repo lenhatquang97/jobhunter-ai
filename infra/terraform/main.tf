@@ -471,6 +471,11 @@ resource "aws_ecs_task_definition" "init" {
     secrets          = concat(local.container.secrets, [{ name = "MASTER_CONFIG", valueFrom = aws_rds_cluster.main.master_user_secret[0].secret_arn }, { name = "INIT_CONFIG", valueFrom = aws_secretsmanager_secret.bootstrap.arn }]),
     logConfiguration = { logDriver = "awslogs", options = { awslogs-group = aws_cloudwatch_log_group.main.name, awslogs-region = "us-east-1", awslogs-stream-prefix = "init" } }
   })])
+  # Preserve the one-time bootstrap artifact. Maintenance may update the app
+  # image without registering a new init revision using the retired init role.
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
   volume {
 
     name = "odoo"

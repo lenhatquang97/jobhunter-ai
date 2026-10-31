@@ -32,11 +32,11 @@ class ReadDocument(StrictModel):
 
 
 class CreateJob(StrictModel):
-    name: StrictStr = Field(min_length=1, max_length=300)
-    department_name: StrictStr | None = Field(default=None, max_length=200)
-    number_of_recruitment: StrictInt = Field(default=1, ge=1, le=1000)
-    description: StrictStr = Field(default="", max_length=10000)
-    requirements: StrictStr = Field(default="", max_length=10000)
+    name: StrictStr = Field(..., min_length=1, max_length=300)
+    department_name: StrictStr | None = Field(..., max_length=200)
+    number_of_recruitment: StrictInt = Field(..., ge=1, le=1000)
+    description: StrictStr = Field(..., max_length=10000)
+    requirements: StrictStr = Field(..., max_length=10000)
 
 
 MODELS = {

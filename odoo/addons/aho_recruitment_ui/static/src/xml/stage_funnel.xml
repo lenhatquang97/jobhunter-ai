@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="aho_recruitment_ui.StageFunnel">
+        <div class="aho-funnel" role="group" aria-label="Ứng viên theo giai đoạn">
+            <button t-foreach="this.stages" t-as="stage" t-key="stage.id" type="button"
+                    class="aho-funnel-row" t-att-class="{'aho-funnel-empty': !stage.count}"
+                    t-att-title="stage.stale ? stage.stale + ' ứng viên chưa đổi giai đoạn quá ' + stage.stale_days + ' ngày' : 'Xem ứng viên ở giai đoạn này'"
+                    t-on-click="(ev) => this.openStage(stage, ev)">
+                <span class="aho-funnel-name" t-out="stage.name"/>
+                <span class="aho-funnel-track"><span class="aho-funnel-bar" t-att-style="'width:' + this.barWidth(stage)"/></span>
+                <span class="aho-funnel-count">
+                    <t t-out="stage.count"/>
+                    <span t-if="stage.stale" class="aho-funnel-stale"><i class="oi" data-icon="schedule" aria-hidden="true"/> <t t-out="stage.stale"/></span>
+                </span>
+            </button>
+        </div>
+    </t>
+    <t t-name="aho_recruitment_ui.WarningList">
+        <ul t-if="this.warnings.length" class="aho-warnings">
+            <li t-foreach="this.warnings" t-as="w" t-key="w_index" t-att-class="'aho-warning aho-warning-' + w.level">
+                <i class="oi" t-att-data-icon="w.level === 'risk' ? 'warning' : 'info'" aria-hidden="true"/>
+                <span t-out="w.text"/>
+            </li>
+            <li t-if="this.hidden" class="aho-warning aho-warning-more">+<t t-out="this.hidden"/> cảnh báo khác</li>
+        </ul>
+    </t>
+</templates>

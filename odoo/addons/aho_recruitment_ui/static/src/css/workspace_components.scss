@@ -1,0 +1,356 @@
+/* Shared recruitment components: the only place for buttons, badges, cards, lists, forms,
+   kanban columns and the page header. Layout of the navigation lives in material_sidebar.scss.
+   Keep native Odoo structure, controls, validation, drag targets and event handlers intact. */
+
+body:has(.aho-sidebar-brand) {
+    .o_web_client, .o_dialog, .o_popover {
+        font-family: var(--aho-font);
+        color: var(--aho-ink);
+        color-scheme: light;
+    }
+
+    .o_action_manager, .o_dialog {
+        /* ---------- Buttons (kit: Buttons, Size=Medium) ---------- */
+        .btn:not(.rounded-circle):not(.o_arrow_button) {
+            border-radius: var(--aho-radius);
+            font-weight: 500;
+            box-shadow: none;
+        }
+        .btn-primary {
+            --btn-bg: var(--aho-primary);
+            --btn-border-color: var(--aho-primary);
+            --btn-hover-bg: var(--aho-primary-hover);
+            --btn-hover-border-color: var(--aho-primary-hover);
+            --btn-active-bg: var(--aho-primary-hover);
+            color: var(--aho-on-primary);
+            background: var(--aho-primary);
+            border-color: var(--aho-primary);
+        }
+        .btn-primary:hover:not(:disabled) {
+            color: var(--aho-on-primary);
+            background: var(--aho-primary-hover);
+            border-color: var(--aho-primary-hover);
+        }
+        /* kit: Hierarchy=Secondary Border */
+        .btn-secondary:not(.o_arrow_button), .btn-outline-secondary, .btn-outline-primary {
+            color: var(--aho-ink);
+            background: var(--aho-card);
+            border-color: var(--aho-outline-action);
+        }
+        .btn-secondary:not(.o_arrow_button):hover:not(:disabled),
+        .btn-outline-secondary:hover:not(:disabled),
+        .btn-outline-primary:hover:not(:disabled),
+        .btn-secondary.active, .btn-outline-secondary.active {
+            color: var(--aho-ink);
+            background: var(--aho-selected);
+            border-color: var(--aho-outline-action);
+        }
+        /* kit: Hierarchy=Link / Tertiary */
+        .btn-link { color: var(--aho-ink); font-weight: 500; }
+        .btn-link:hover { color: var(--aho-muted); }
+        .btn:focus-visible, .o_input:focus-visible {
+            outline: 2px solid var(--aho-accent);
+            outline-offset: 2px;
+        }
+
+        /* ---------- Badges (kit: Badge, Type=Contained, Size=Small) ---------- */
+        .badge {
+            padding: 3px 8px;
+            border-radius: var(--aho-radius);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.4;
+            white-space: normal;
+            text-align: left;
+            color: var(--aho-grey-fg);
+            background: var(--aho-grey-bg);
+        }
+        .badge.text-bg-success, .badge.bg-success { color: var(--aho-green-fg) !important; background: var(--aho-green-bg) !important; }
+        .badge.text-bg-info, .badge.bg-info       { color: var(--aho-blue-fg) !important;  background: var(--aho-blue-bg) !important; }
+        .badge.text-bg-warning, .badge.bg-warning { color: var(--aho-yellow-fg) !important; background: var(--aho-yellow-bg) !important; }
+        .badge.text-bg-danger, .badge.bg-danger   { color: var(--aho-red-fg) !important;   background: var(--aho-red-bg) !important; }
+        .badge.text-bg-primary, .badge.bg-primary { color: var(--aho-purple-fg) !important; background: var(--aho-purple-bg) !important; }
+
+        /* ---------- Search, forms, tabs ---------- */
+        .o_searchview {
+            border: 1px solid var(--aho-outline);
+            border-radius: var(--aho-radius);
+            background: var(--aho-card);
+            box-shadow: none;
+        }
+        .o_form_view .o_form_sheet {
+            border: 1px solid var(--aho-outline);
+            border-radius: var(--aho-card-radius);
+            box-shadow: none;
+        }
+        .o_form_label { color: var(--aho-muted); font-weight: 500; }
+        .o_form_view .o_input:not([readonly]):not([disabled]) { border-color: var(--aho-outline); }
+        /* kit: Tab / Outline Tabs */
+        .o_notebook .nav-tabs { border-bottom: 1px solid var(--aho-outline); gap: var(--aho-space-2); }
+        .o_notebook .nav-link {
+            padding: 12px var(--aho-space-4);
+            border: 0;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            color: var(--aho-muted);
+            background: transparent;
+            font-weight: 500;
+        }
+        .o_notebook .nav-link.active {
+            border-bottom-color: var(--aho-ink);
+            color: var(--aho-ink);
+            background: transparent;
+        }
+        .alert-info {
+            color: var(--aho-ink);
+            border: 1px solid var(--aho-outline);
+            border-radius: var(--aho-radius);
+            background: var(--aho-sidebar-bg);
+        }
+
+        /* ---------- Tables (kit: Table / Header, Rows) ---------- */
+        .o_list_table {
+            --table-hover-bg: var(--aho-sidebar-bg);
+            color: var(--aho-ink);
+            th { color: var(--aho-muted); font-weight: 500; background: var(--aho-sidebar-bg); }
+            td, th { border-color: var(--aho-outline); }
+        }
+        .o_form_view .o_field_one2many .o_list_renderer {
+            margin: 0;
+            border: 1px solid var(--aho-outline);
+            border-radius: var(--aho-radius);
+            box-shadow: none;
+        }
+
+        /* ---------- Cards ---------- */
+        .o_kanban_renderer {
+            background: var(--aho-surface);
+            .o_kanban_record:not(.o_kanban_ghost) {
+                border: 1px solid var(--aho-outline);
+                border-radius: var(--aho-card-radius);
+                box-shadow: none;
+                background: var(--aho-card);
+            }
+            .o_kanban_record:not(.o_kanban_ghost):hover { border-color: var(--aho-outline-strong); }
+        }
+    }
+
+    /* ---------- Dialogs ---------- */
+    .o_dialog .modal-content {
+        border: 1px solid var(--aho-outline);
+        border-radius: var(--aho-card-radius);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, .12);
+        background: var(--aho-card);
+    }
+    .o_dialog .modal-header, .o_dialog .modal-footer { border-color: var(--aho-outline); background: var(--aho-card); }
+    .o_dialog .modal-title { font-weight: 500; font-size: 20px; }
+
+    /* ---------- Page header (kit: Header / Section Header) ---------- */
+    .o_action_manager .o_control_panel {
+        padding: var(--aho-space-4) var(--aho-space-6);
+        border-bottom: 1px solid var(--aho-outline);
+        background: var(--aho-card);
+        .o_breadcrumb .active, .o_last_breadcrumb_item { font-size: 24px !important; font-weight: 500; line-height: 1.2; color: var(--aho-ink); }
+        .o_breadcrumb .breadcrumb-item:not(.active) a { color: var(--aho-muted); }
+        /* View switcher as outline tabs */
+        .o_cp_switch_buttons {
+            gap: var(--aho-space-1);
+            .o_switch_view {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                white-space: nowrap;
+                border: 0;
+                border-bottom: 2px solid transparent;
+                border-radius: 0;
+                background: transparent;
+                color: var(--aho-muted);
+                padding: 6px var(--aho-space-3);
+            }
+            .o_switch_view:hover { color: var(--aho-ink); background: transparent; }
+            .o_switch_view.active { color: var(--aho-ink); border-bottom-color: var(--aho-ink); background: transparent; }
+        }
+    }
+    .o_action_manager .o_content,
+    .o_action_manager .o_form_view .o_form_sheet_bg { background: var(--aho-surface); }
+    .o_action_manager .o_list_renderer {
+        margin: var(--aho-space-5) var(--aho-space-6);
+        overflow: auto;
+        border: 1px solid var(--aho-outline);
+        border-radius: var(--aho-card-radius);
+        background: var(--aho-card);
+    }
+
+    /* ---------- Applicant card content ---------- */
+    .aho-candidate-ai {
+        display: flex;
+        flex-direction: column;
+        gap: var(--aho-space-2);
+        margin: var(--aho-space-3) 0;
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--aho-ink);
+    }
+    .aho-card-label { color: var(--aho-muted); font-size: 12px; font-weight: 500; }
+    .aho-candidate-status, .aho-candidate-owner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--aho-space-1) var(--aho-space-2);
+    }
+    .aho-candidate-next {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--aho-space-2) 10px;
+        border-radius: var(--aho-radius);
+        background: var(--aho-sidebar-bg);
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    /* ---------- Job card ---------- */
+    .aho-job-card {
+        display: flex;
+        flex-direction: column;
+        gap: var(--aho-space-3);
+        padding: var(--aho-space-2);
+        .aho-job-heading { display: flex; align-items: start; justify-content: space-between; gap: var(--aho-space-3); }
+        .aho-job-title { font-size: 16px; line-height: 1.4; font-weight: 500; color: var(--aho-ink); }
+        .aho-job-tags { display: flex; flex-wrap: wrap; gap: var(--aho-space-1) var(--aho-space-2); }
+        .aho-job-tags:empty { display: none; }
+        .aho-job-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px var(--aho-space-2);
+            border-radius: var(--aho-radius);
+            color: var(--aho-grey-fg);
+            background: var(--aho-grey-bg);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.6;
+            .oi { color: var(--aho-muted); }
+        }
+        .aho-job-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--aho-space-2) var(--aho-space-3); font-size: 13px; color: var(--aho-muted); }
+        .aho-job-status strong { color: var(--aho-ink); font-weight: 500; }
+        .aho-job-deadline .o_field_widget { display: inline; }
+        .aho-job-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--aho-space-2);
+            min-height: 24px;
+            font-size: 13px;
+            color: var(--aho-muted);
+        }
+        .aho-job-footer:empty { display: none; }
+        .aho-job-todo { padding: 0; font-size: 13px; color: var(--aho-yellow-fg); }
+        .aho-job-todo:hover { color: var(--aho-ink); }
+        .aho-job-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--aho-space-2); }
+        .aho-job-actions .btn { width: 100%; white-space: nowrap; }
+    }
+
+    /* ---------- Stage funnel and warnings on the position card ---------- */
+    .aho-funnel { display: flex; flex-direction: column; gap: 2px; padding: var(--aho-space-2) 0; border-block: 1px solid var(--aho-outline); }
+    .aho-funnel-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--aho-space-2);
+        width: 100%;
+        padding: 5px var(--aho-space-1);
+        border: 0;
+        border-radius: var(--aho-radius);
+        background: transparent;
+        color: var(--aho-ink);
+        font-size: 13px;
+        text-align: left;
+    }
+    .aho-funnel-row:hover { background: var(--aho-sidebar-bg); }
+    .aho-funnel-row:focus-visible { outline: 2px solid var(--aho-accent); outline-offset: 1px; }
+    .aho-funnel-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .aho-funnel-track { height: 6px; border-radius: 3px; background: var(--aho-selected); overflow: hidden; }
+    .aho-funnel-bar { display: block; height: 100%; border-radius: 3px; background: var(--aho-ink); }
+    .aho-funnel-count { display: inline-flex; align-items: center; gap: 6px; min-width: 24px; justify-content: flex-end; font-weight: 500; }
+    .aho-funnel-empty { color: var(--aho-muted); }
+    .aho-funnel-empty .aho-funnel-bar { width: 0 !important; }
+    .aho-funnel-stale { color: var(--aho-yellow-fg); font-size: 12px; }
+    .aho-warnings { display: flex; flex-direction: column; gap: var(--aho-space-1); margin: var(--aho-space-2) 0 0; padding: 0; list-style: none; }
+    .aho-warning { display: flex; align-items: baseline; gap: var(--aho-space-2); padding: 6px var(--aho-space-2); border-radius: var(--aho-radius); font-size: 12px; line-height: 1.45; }
+    .aho-warning-risk { color: var(--aho-red-fg); background: var(--aho-red-bg); }
+    .aho-warning-watch { color: var(--aho-yellow-fg); background: var(--aho-yellow-bg); }
+    .aho-warning-more { color: var(--aho-muted); padding-top: 0; }
+
+    /* ---------- Wide applicant list ---------- */
+    .aho-applicant-tracking-list {
+        .o_list_table { min-width: 1060px; }
+        .o_data_cell:is([name="partner_name"], [name="job_id"], [name="aho_next_action"], [name="aho_interview_state"]) {
+            white-space: normal !important;
+            text-overflow: clip !important;
+            .o_field_widget, .badge { white-space: normal; }
+        }
+        .o_data_cell[name="partner_name"] { min-width: 150px; }
+        .o_data_cell[name="job_id"] { min-width: 170px; }
+        .o_data_cell[name="aho_next_action"] { min-width: 240px; }
+    }
+}
+
+/* ---------- Kanban grid and columns ---------- */
+@media screen and (min-width: 992px) {
+    body:has(.aho-sidebar-brand) {
+        .o_kanban_renderer .o_kanban_record { height: auto; min-height: 0; }
+        /* Ungrouped cards (job positions) use one grid size everywhere */
+        .o_kanban_renderer.o_kanban_ungrouped {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--aho-space-4);
+            align-content: start;
+            align-items: start;
+            padding: var(--aho-space-5) var(--aho-space-6);
+            .o_kanban_record { width: 100%; min-width: 0 !important; margin: 0; }
+            .o_kanban_ghost { display: none; }
+        }
+        /* Grouped pipeline: kit Contact (Kanban) columns */
+        .o_kanban_renderer.o_kanban_grouped { padding: var(--aho-space-5) var(--aho-space-6); gap: var(--aho-space-4); }
+        .o_kanban_applicant .o_kanban_group:not(.o_column_folded) {
+            flex: 0 0 clamp(280px, calc((100vw - var(--aho-sidebar-width) - 112px) / 3), 400px);
+            width: auto;
+            min-width: 0;
+            padding: var(--aho-space-3);
+            border: 1px solid var(--aho-outline);
+            border-radius: var(--aho-card-radius);
+            background: var(--aho-card);
+        }
+        .o_kanban_applicant .o_kanban_group .o_kanban_record { width: 100%; max-width: none; margin-bottom: var(--aho-space-3); }
+        .o_kanban_group .o_kanban_header_title {
+            color: var(--aho-ink);
+            font-size: 14px;
+            font-weight: 500;
+        }
+    }
+}
+
+/* Odoo picks the side chatter from viewport width without subtracting our sidebar.
+   Stack it below the profile at laptop widths so fields and history stay readable. */
+@media screen and (min-width: 992px) and (max-width: 1599px) {
+    body:has(.aho-sidebar-brand) .o_action_manager {
+        .o_form_renderer:has(> .o-mail-Form-chatter.o-aside) { flex-direction: column !important; overflow-y: auto; }
+        .o_form_sheet_bg:has(+ .o-mail-Form-chatter.o-aside) {
+            flex: 1 0 auto;
+            width: 100%;
+            overflow: visible;
+            --formView-sheetBg-padding-right: var(--aho-space-5);
+            --formView-sheetBg-padding-left: var(--aho-space-5);
+        }
+        .o-mail-Form-chatter.o-aside {
+            flex: 1 0 auto;
+            width: 100%;
+            max-width: 1120px;
+            min-height: 280px;
+            padding: var(--aho-space-4) var(--aho-space-5) var(--aho-space-5);
+            border-top: 1px solid var(--aho-outline);
+        }
+    }
+}

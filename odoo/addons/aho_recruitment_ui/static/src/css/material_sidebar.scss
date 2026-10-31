@@ -1,0 +1,249 @@
+/* Recruitment navigation only (kit: Navigation / Sidebar, State=Full and Minimized).
+   Tokens live in design_system.css, shared components in workspace_components.scss. */
+
+.aho-sidebar-brand,
+.aho-sidebar-menu,
+.aho-sidebar-toggle {
+    display: none;
+}
+
+@media screen and (min-width: 992px) {
+    .o_web_client:has(> .o_navbar .aho-sidebar-brand) {
+        flex-direction: row;
+        font-family: var(--aho-font);
+        color: var(--aho-ink);
+        background: var(--aho-surface);
+
+        > .o_navbar {
+            position: relative;
+            z-index: 1050;
+            flex: 0 0 var(--aho-sidebar-width);
+            width: var(--aho-sidebar-width);
+            height: 100%;
+            border-right: 1px solid var(--aho-outline);
+        }
+        > .o_action_manager { flex: 1 1 0; width: auto; min-width: 0; margin-left: 0; }
+
+        .o_main_navbar {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+            overflow: hidden;
+            padding: 0;
+            color: var(--aho-ink);
+            background: var(--aho-sidebar-bg);
+        }
+        .o_main_navbar > .o_menu_brand,
+        .o_main_navbar > .o_navbar_breadcrumbs,
+        .o_main_navbar > .o_menu_sections { display: none !important; }
+
+        /* Logo row: 72px, bottom border, toggle on the right */
+        .aho-sidebar-brand {
+            display: flex;
+            align-items: center;
+            flex: 0 0 72px;
+            padding: 0 44px 0 20px;
+            border-bottom: 1px solid var(--aho-outline);
+        }
+        .aho-brand-link { display: flex; align-items: center; gap: var(--aho-space-3); color: var(--aho-ink); text-decoration: none; }
+        .aho-brand-link:hover { color: var(--aho-ink); text-decoration: none; }
+        .aho-brand-link img { width: 28px; height: 28px; flex: 0 0 auto; border-radius: var(--aho-radius); }
+        .aho-brand-copy { font-size: 14px; font-weight: 500; line-height: 1.2; white-space: nowrap; }
+
+        .aho-sidebar-toggle {
+            position: absolute;
+            top: 22px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: 0;
+            border-radius: 2px;
+            color: var(--aho-muted);
+            background: var(--aho-selected);
+        }
+        .aho-sidebar-toggle:hover { color: var(--aho-ink); }
+        .aho-sidebar-toggle:focus-visible { outline: 2px solid var(--aho-accent); outline-offset: 2px; }
+
+        /* Menu groups */
+        .aho-sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            padding: 20px 0;
+            gap: 20px;
+            scrollbar-width: thin;
+        }
+        .aho-sidebar-group { display: flex; flex-direction: column; gap: var(--aho-space-1); padding: 0 var(--aho-space-4); }
+        .aho-sidebar-group + .aho-sidebar-group { padding-top: 20px; border-top: 1px solid var(--aho-outline); }
+        .aho-sidebar-section-label {
+            padding: var(--aho-space-1) var(--aho-space-2);
+            color: var(--aho-muted);
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.4;
+            text-transform: uppercase;
+        }
+        .aho-sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: var(--aho-space-3);
+            height: 36px;
+            padding: var(--aho-space-2);
+            border-radius: var(--aho-radius);
+            color: var(--aho-muted);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.5;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .aho-sidebar-link > .oi { width: 20px; flex: 0 0 20px; font-size: 16px; text-align: center; }
+        .aho-sidebar-link:hover { color: var(--aho-ink); background: var(--aho-selected); text-decoration: none; }
+        .aho-sidebar-link:focus-visible { outline: 2px solid var(--aho-accent); outline-offset: 2px; }
+        .aho-sidebar-link.aho-active { color: var(--aho-ink); background: var(--aho-selected); }
+
+        /* Footer: user menu and systray */
+        .o_main_navbar > .o_menu_systray {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--aho-space-1);
+            flex: 0 0 auto;
+            width: 100%;
+            margin: 0 !important;
+            padding: var(--aho-space-3) var(--aho-space-4) var(--aho-space-4);
+            border-top: 1px solid var(--aho-outline);
+            background: var(--aho-sidebar-bg) !important;
+        }
+        .o_main_navbar > .o_menu_systray > div:empty,
+        .o_main_navbar > .o_menu_systray .o_switch_company_menu:disabled { display: none !important; }
+        .o_main_navbar > .o_menu_systray .o_user_menu {
+            order: 9;
+            flex: 1 0 100%;
+            display: flex !important;
+            align-items: center;
+            padding: var(--aho-space-2) !important;
+            border-radius: var(--aho-radius);
+        }
+        .o_main_navbar > .o_menu_systray .o_user_menu:hover { background: var(--aho-selected); }
+        .o_main_navbar > .o_menu_systray .o_user_menu .oe_topbar_name {
+            display: block !important;
+            max-width: 160px !important;
+            color: var(--aho-ink);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .o_main_navbar > .o_menu_systray :is(.dropdown-toggle, .o_nav_entry) {
+            min-height: 32px;
+            border-radius: var(--aho-radius);
+            color: var(--aho-muted);
+            background: transparent;
+        }
+        .o_main_navbar > .o_menu_systray :is(.dropdown-toggle, .o_nav_entry):hover { color: var(--aho-ink); background: var(--aho-selected); }
+        .o_navbar_apps_menu > .dropdown-toggle { color: var(--aho-muted) !important; background: transparent !important; }
+    }
+
+    /* Minimized: icons only, labels as tooltips */
+    .o_web_client:has(> .aho-sidebar-collapsed) {
+        --aho-sidebar-width: var(--aho-sidebar-collapsed);
+        > .o_navbar.aho-sidebar-collapsed {
+            .aho-sidebar-brand { justify-content: center; padding: 0; }
+            .aho-brand-copy, .aho-sidebar-section-label, .aho-sidebar-link > span { display: none; }
+            .aho-sidebar-brand { flex-basis: 64px; }
+            .aho-sidebar-toggle { position: static; margin: var(--aho-space-3) auto 0; }
+            .aho-sidebar-group { padding: 0 10px; }
+            .aho-sidebar-link { justify-content: center; }
+            .o_menu_systray {
+                flex-direction: column;
+                padding: var(--aho-space-2) 0;
+                .o_user_menu { flex-basis: auto; padding: 6px !important; }
+                .oe_topbar_name { display: none !important; }
+            }
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aho-sidebar-link { transition: none; }
+}
+
+/* Below the desktop breakpoint: top bar with the same destinations as a wrapping row */
+@media screen and (max-width: 991.98px) {
+    .o_web_client:has(> .o_navbar .aho-sidebar-brand) {
+        font-family: var(--aho-font);
+        color: var(--aho-ink);
+        background: var(--aho-surface);
+
+        > .o_navbar { position: relative; flex: 0 0 auto; border-bottom: 1px solid var(--aho-outline); }
+        .o_main_navbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            height: auto;
+            min-height: 56px;
+            padding: var(--aho-space-2) var(--aho-space-3);
+            gap: var(--aho-space-2);
+            color: var(--aho-ink);
+            background: var(--aho-sidebar-bg);
+        }
+        .o_main_navbar > .o_menu_brand,
+        .o_main_navbar > .o_navbar_breadcrumbs,
+        .o_main_navbar > .o_menu_sections { display: none !important; }
+        .aho-sidebar-brand { display: block; order: 0; flex: 1 1 auto; min-width: 0; }
+        .aho-brand-link { display: flex; align-items: center; gap: var(--aho-space-2); color: var(--aho-ink); text-decoration: none; }
+        .aho-brand-link img { width: 28px; height: 28px; border-radius: var(--aho-radius); }
+        .aho-brand-copy { font-size: 16px; font-weight: 500; }
+        .aho-sidebar-toggle {
+            display: flex;
+            order: 1;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+            border: 1px solid var(--aho-outline);
+            border-radius: var(--aho-radius);
+            color: var(--aho-ink);
+            background: var(--aho-card);
+        }
+        .o_main_navbar > .o_menu_systray { order: 2; margin-left: 0 !important; color: var(--aho-muted); }
+        .o_menu_systray :is(.dropdown-toggle, .o_nav_entry) { color: var(--aho-muted); background: transparent; }
+        .aho-sidebar-menu {
+            display: flex;
+            flex-wrap: wrap;
+            order: 3;
+            flex: 1 0 100%;
+            gap: var(--aho-space-1);
+            padding-top: var(--aho-space-2);
+            border-top: 1px solid var(--aho-outline);
+        }
+        .aho-sidebar-group { display: contents; }
+        .aho-sidebar-section-label { display: none; }
+        .aho-sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 40px;
+            padding: var(--aho-space-2) 10px;
+            border-radius: var(--aho-radius);
+            color: var(--aho-muted);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .aho-sidebar-link.aho-active { color: var(--aho-ink); background: var(--aho-selected); }
+        .aho-sidebar-link:focus-visible, .aho-sidebar-toggle:focus-visible { outline: 2px solid var(--aho-accent); outline-offset: 2px; }
+        > .o_navbar.aho-sidebar-collapsed .aho-sidebar-menu { display: none; }
+        .o_kanban_renderer.o_kanban_ungrouped .o_kanban_record { min-width: 0 !important; width: 100%; }
+    }
+}

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend native views instead of replacing core ATS capabilities. -->
+    <record id="applicant_tracking_list" model="ir.ui.view">
+        <field name="name">hr.applicant.aho.tracking.list</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.crm_case_tree_view_job"/>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="string">Theo dõi ứng viên</attribute>
+                <attribute name="class" add="aho-applicant-tracking-list" separator=" "/>
+                <attribute name="default_order">write_date desc</attribute>
+            </xpath>
+            <field name="partner_name" position="attributes"><attribute name="string">Ứng viên</attribute><attribute name="width">[150]</attribute></field>
+            <field name="job_id" position="attributes"><attribute name="string">Vị trí</attribute><attribute name="optional">show</attribute><attribute name="width">[160]</attribute></field>
+            <field name="stage_id" position="attributes"><attribute name="string">Giai đoạn tuyển dụng</attribute><attribute name="optional">show</attribute><attribute name="width">[130]</attribute></field>
+            <field name="stage_id" position="after">
+                <field name="aho_interview_state" widget="badge" width="[150]" decoration-success="aho_interview_state == 'reported'" decoration-danger="aho_interview_state == 'error'"/>
+                <field name="aho_next_action" width="[220]"/>
+            </field>
+            <field name="recruiter_id" position="attributes"><attribute name="string">HR phụ trách</attribute><attribute name="width">[150]</attribute></field>
+            <field name="activity_date_deadline" position="attributes"><attribute name="string">Hạn công việc</attribute><attribute name="optional">show</attribute></field>
+            <field name="talent_pool_ids" position="attributes"><attribute name="string">Kho ứng viên</attribute></field>
+            <field name="create_date" position="attributes"><attribute name="optional">hide</attribute></field>
+            <field name="email_from" position="attributes"><attribute name="optional">hide</attribute></field>
+            <field name="partner_phone" position="attributes"><attribute name="optional">hide</attribute></field>
+            <field name="priority" position="attributes"><attribute name="optional">hide</attribute></field>
+            <field name="categ_ids" position="attributes"><attribute name="optional">hide</attribute></field>
+            <xpath expr="//header/button[@name='action_talent_pool_add_applicants']" position="attributes"><attribute name="string">Thêm vào kho ứng viên</attribute></xpath>
+            <xpath expr="//header/button[@name='action_job_add_applicants']" position="attributes"><attribute name="string">Ứng tuyển vị trí</attribute></xpath>
+            <xpath expr="//header/button[@name='archive_applicant']" position="attributes"><attribute name="string">Từ chối</attribute></xpath>
+        </field>
+    </record>
+    <record id="applicant_tracking_search" model="ir.ui.view">
+        <field name="name">hr.applicant.aho.tracking.search</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_search_bis"/>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <field name="partner_name" position="attributes"><attribute name="string">Ứng viên / Email</attribute></field>
+            <field name="job_id" position="attributes"><attribute name="string">Vị trí</attribute></field>
+            <field name="recruiter_id" position="attributes"><attribute name="string">HR phụ trách</attribute></field>
+            <xpath expr="//filter[@name='unassigned']" position="attributes"><attribute name="string">Chưa có HR phụ trách</attribute></xpath>
+            <xpath expr="//filter[@name='unassigned']" position="after">
+                <separator/>
+                <filter name="has_report" string="Có báo cáo phỏng vấn tự động" domain="[('rag_interview_ids.state', '=', 'reported')]"/>
+                <filter name="interview_running" string="Ứng viên đang phỏng vấn" domain="[('rag_interview_ids.state', '=', 'running')]"/>
+                <filter name="interview_error" string="Có phiên bị lỗi" domain="[('rag_interview_ids.state', '=', 'error')]"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="action_applicant_tracking" model="ir.actions.act_window">
+        <field name="name">Theo dõi ứng viên</field>
+        <field name="res_model">hr.applicant</field>
+        <field name="view_mode">list,kanban,form,graph,calendar,pivot,activity</field>
+        <field name="view_id" ref="applicant_tracking_list"/>
+        <field name="search_view_id" ref="applicant_tracking_search"/>
+        <field name="context">{'aho_pipeline': True}</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">Chưa có hồ sơ ứng viên</p><p>Thêm hồ sơ cho một vị trí tuyển dụng để bắt đầu theo dõi.</p></field>
+    </record>
+    <menuitem id="menu_applicant_tracking" name="Theo dõi ứng viên" parent="hr_recruitment.menu_hr_recruitment_root" action="action_applicant_tracking" sequence="15" groups="hr_recruitment.group_hr_recruitment_user"/>
+    <record id="applicant_kanban" model="ir.ui.view">
+        <field name="name">hr.applicant.aho.kanban</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_kanban_view_applicant"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']//field[@name='categ_ids']" position="before">
+                <div class="aho-candidate-ai" groups="hr_recruitment.group_hr_recruitment_user">
+                    <div class="aho-candidate-status"><span class="aho-card-label">Phỏng vấn tự động</span><field name="aho_interview_state" widget="badge" decoration-success="aho_interview_state == 'reported'" decoration-danger="aho_interview_state == 'error'"/></div>
+                    <div class="aho-candidate-next"><span class="aho-card-label">Việc tiếp theo</span><field name="aho_next_action"/></div>
+                    <div class="aho-candidate-owner" t-if="record.recruiter_id.raw_value"><span class="aho-card-label">HR phụ trách</span><field name="recruiter_id"/></div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+    <record id="applicant_form" model="ir.ui.view">
+        <field name="name">hr.applicant.aho.form</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_name']" position="attributes"><attribute name="string">Ứng viên</attribute></xpath>
+            <xpath expr="//field[@name='recruiter_id']" position="attributes"><attribute name="string">HR phụ trách</attribute></xpath>
+            <xpath expr="//field[@name='job_id']" position="attributes"><attribute name="string">Vị trí tuyển dụng</attribute></xpath>
+            <xpath expr="//label[@for='partner_name']" position="attributes"><attribute name="string">Ứng viên</attribute></xpath>
+            <xpath expr="//field[@name='partner_phone']" position="attributes"><attribute name="string">Số điện thoại</attribute></xpath>
+            <xpath expr="//field[@name='linkedin_profile']" position="attributes"><attribute name="string">Hồ sơ LinkedIn</attribute></xpath>
+            <xpath expr="//field[@name='priority']" position="attributes"><attribute name="string">Đánh giá</attribute></xpath>
+            <xpath expr="//field[@name='interviewer_ids']" position="attributes"><attribute name="string">Người phỏng vấn</attribute></xpath>
+            <xpath expr="//field[@name='categ_ids']" position="attributes"><attribute name="string">Nhãn</attribute></xpath>
+            <xpath expr="//button[@name='archive_applicant']" position="attributes"><attribute name="string">Từ chối</attribute></xpath>
+            <xpath expr="//button[@name='action_talent_pool_add_applicants']" position="attributes"><attribute name="string">Thêm vào kho ứng viên</attribute></xpath>
+            <xpath expr="//notebook" position="before"><div class="alert alert-info" role="status" groups="hr_recruitment.group_hr_recruitment_user"><strong>Việc tiếp theo: </strong><field name="aho_next_action" readonly="1" class="d-inline"/></div></xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Phỏng vấn tự động" groups="hr_recruitment.group_hr_recruitment_user">
+                    <p class="text-muted">Ứng viên trả lời bằng giọng nói qua link, AI hỏi theo JD và CV rồi viết báo cáo. Điểm và gợi ý chỉ để tham khảo; HR đọc bằng chứng trong báo cáo trước khi quyết định.</p>
+                    <p class="text-muted fst-italic" invisible="rag_interview_ids">Chưa có phiên phỏng vấn tự động cho hồ sơ này.</p>
+                    <field name="rag_interview_ids" readonly="1" invisible="not rag_interview_ids" context="{'form_view_ref': 'rag_interview_agent.rag_interview_form'}">
+                        <list create="0" delete="0">
+                            <field name="create_date" string="Ngày tạo"/>
+                            <field name="name" string="Phiên phỏng vấn"/>
+                            <field name="state" string="Trạng thái" widget="badge"/>
+                            <field name="score" string="Điểm tham khảo" invisible="state != 'reported'" width="[140]"/>
+                            <field name="recommendation" string="Gợi ý của AI" invisible="state != 'reported'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

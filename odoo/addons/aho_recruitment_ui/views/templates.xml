@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="interview_light_theme" inherit_id="rag_interview_agent.interview_page">
+        <xpath expr="//head" position="inside"><link rel="stylesheet" href="/aho_recruitment_ui/static/src/css/design_system.css"/></xpath>
+        <xpath expr="//body" position="attributes"><attribute name="class" add="aho-public" separator=" "/></xpath>
+        <xpath expr="//main/*[1]" position="before"><div class="brand"><img src="/aho_recruitment_ui/static/src/img/ai-hiring-operator.svg" alt=""/>AI Hiring Operator</div></xpath>
+        <xpath expr="//p[@id='status']" position="attributes"><attribute name="role">status</attribute><attribute name="aria-live">polite</attribute></xpath>
+    </template>
+</odoo>

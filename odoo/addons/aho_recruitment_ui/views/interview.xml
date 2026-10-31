@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="interview_form_labels" model="ir.ui.view">
+        <field name="name">rag.interview.aho.form</field><field name="model">rag.interview</field>
+        <field name="inherit_id" ref="rag_interview_agent.rag_interview_form"/>
+        <field name="arch" type="xml">
+            <field name="applicant_id" position="attributes"><attribute name="string">Ứng viên</attribute></field>
+            <field name="job_id" position="attributes"><attribute name="string">Vị trí tuyển dụng</attribute></field>
+            <field name="url" position="attributes"><attribute name="string">Đường dẫn phỏng vấn</attribute></field>
+            <field name="max_topics" position="attributes"><attribute name="string">Số chủ đề tối đa</attribute></field>
+            <field name="max_probes" position="attributes"><attribute name="string">Số câu hỏi thêm mỗi chủ đề</attribute></field>
+            <field name="score" position="attributes"><attribute name="string">Điểm tham khảo</attribute></field>
+            <field name="recommendation" position="attributes"><attribute name="string">Gợi ý của AI</attribute></field>
+            <field name="summary" position="attributes"><attribute name="string">Tóm tắt do AI tạo</attribute></field>
+            <field name="screening" position="attributes"><attribute name="string">Thông tin sàng lọc</attribute></field>
+            <field name="strengths" position="attributes"><attribute name="string">Bằng chứng tích cực</attribute></field>
+            <field name="concerns" position="attributes"><attribute name="string">Điểm cần xác minh</attribute></field>
+            <field name="cv_claims" position="attributes"><attribute name="string">Thông tin CV cần kiểm tra</attribute></field>
+            <field name="cv_consistency" position="attributes"><attribute name="string">Độ nhất quán với CV</attribute></field>
+            <xpath expr="//page[1]" position="attributes"><attribute name="string">Báo cáo</attribute></xpath>
+            <xpath expr="//page[2]" position="attributes"><attribute name="string">Nội dung phỏng vấn</attribute></xpath>
+        </field>
+    </record>
+    <record id="interview_list_labels" model="ir.ui.view">
+        <field name="name">rag.interview.aho.list</field>
+        <field name="model">rag.interview</field>
+        <field name="inherit_id" ref="rag_interview_agent.rag_interview_list"/>
+        <field name="arch" type="xml">
+            <field name="name" position="attributes"><attribute name="string">Phiên phỏng vấn</attribute></field>
+            <field name="state" position="attributes"><attribute name="string">Trạng thái</attribute><attribute name="widget">badge</attribute></field>
+            <field name="score" position="attributes"><attribute name="string">Điểm tham khảo</attribute><attribute name="invisible">state != 'reported'</attribute></field>
+            <field name="recommendation" position="attributes"><attribute name="string">Gợi ý của AI</attribute><attribute name="invisible">state != 'reported'</attribute></field>
+            <field name="cv_consistency" position="attributes"><attribute name="string">Độ nhất quán với CV</attribute><attribute name="invisible">state != 'reported'</attribute></field>
+            <field name="create_date" position="attributes"><attribute name="string">Ngày tạo</attribute></field>
+        </field>
+    </record>
+    <record id="rag_interview_agent.action_rag_interview" model="ir.actions.act_window">
+        <field name="name">Phỏng vấn tự động</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">Chưa có phiên phỏng vấn tự động</p><p>Mở hồ sơ ứng viên và bấm <b>Mời phỏng vấn tự động</b>. Hệ thống tạo link để ứng viên trả lời bằng giọng nói; AI hỏi theo JD và CV rồi viết báo cáo cho HR.</p></field>
+    </record>
+    <record id="rag_filter_agent.action_rag_filter" model="ir.actions.act_window">
+        <field name="name">Chấm CV theo JD</field>
+        <field name="help" type="html"><p class="o_view_nocontent_smiling_face">Chưa có lượt chấm CV</p><p>Tải lên JD và các CV dạng PDF. AI xếp hạng mức khớp, liệt kê yêu cầu đã đáp ứng và còn thiếu.</p></field>
+    </record>
+    <record id="applicant_interview_button" model="ir.ui.view">
+        <field name="name">hr.applicant.aho.interview.button</field><field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="rag_interview_agent.hr_applicant_form_rag"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_rag_interview']" position="attributes"><attribute name="string">Mời phỏng vấn tự động</attribute></xpath></field>
+    </record>
+</odoo>

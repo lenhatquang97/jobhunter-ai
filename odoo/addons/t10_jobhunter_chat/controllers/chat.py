@@ -110,7 +110,7 @@ class JobhunterChat(http.Controller):
         except (requests.RequestException, ValueError):
             return error('service_unavailable', 'Chat service is temporarily unavailable.')
 
-    def _grant(self, bridge, run_id, refs, purpose, workflow=None, client_message_id=None):
+    def _grant(self, bridge, run_id, refs, purpose, workflow=None, client_message_id=None, conversation_id=None):
         # Commit only freshly issued private metadata, before a callback can race the BFF response.
         with bridge.env.registry.cursor() as cr:
             env = api.Environment(cr, bridge.env.uid, {'allowed_company_ids': bridge._principal()['company_ids']}, su=False)
@@ -121,7 +121,7 @@ class JobhunterChat(http.Controller):
                     case = env['jobhunter.chat.case']._for_applicant(workflow['applicant_id'])
                     approval = case._approval(workflow['data']['draft_version'], client_message_id, run_id)
                     scope['approval_id'] = approval.id
-            grant, token = env['jobhunter.chat.bridge']._issue_grant(run_id, refs, purpose, workflow=scope)
+            grant, token = env['jobhunter.chat.bridge']._issue_grant(run_id, refs, purpose, workflow=scope, job_scope={'conversation_id': conversation_id} if conversation_id else None)
             cr.commit()
         return token
 
@@ -139,6 +139,13 @@ class JobhunterChat(http.Controller):
             if kwargs or not isinstance(arguments, dict):
                 raise ValidationError('Invalid request.')
             bridge, principal = self._scope()
+            if operation == 'jobs.proposals':
+                strict(arguments, ('conversation_id',))
+                return {'proposals': bridge.env['jobhunter.chat.job.proposal']._for_conversation(arguments['conversation_id'])}
+            if operation == 'jobs.confirm':
+                strict(arguments, ('proposal_id', 'review_hash'))
+                proposal = bridge._record('jobhunter.chat.job.proposal', positive(arguments['proposal_id']))
+                return {'proposal': proposal._confirm(arguments['review_hash'])}
             if operation == 'workflow.get':
                 strict(arguments, ('applicant_id',))
                 return {'case': bridge.env['jobhunter.chat.case']._for_applicant(positive(arguments['applicant_id']))._public()}
@@ -218,7 +225,7 @@ class JobhunterChat(http.Controller):
                         raise ValidationError('Use the chat text to provide workflow input.')
                 rid = str(uuid4())
                 body = {'run_id': rid, 'client_message_id': client_id, 'text': text, 'context_refs': refs,
-                        'capability': self._grant(bridge, rid, refs, 'execution', workflow=workflow, client_message_id=client_id), 'odoo_database': request.env.cr.dbname}
+                        'capability': self._grant(bridge, rid, refs, 'execution', workflow=workflow, client_message_id=client_id, conversation_id=cid), 'odoo_database': request.env.cr.dbname}
                 if workflow is not None:
                     body['workflow'] = workflow
                 if 'retry_of_run_id' in arguments:
@@ -268,6 +275,11 @@ class JobhunterChat(http.Controller):
             strict(arguments, ('arguments', 'context_refs'))
             if bridge._contexts(arguments['context_refs']) != claims['context_refs']:
                 raise AccessError('Context does not match capability.')
+            if operation == 'create_job':
+                scope = claims.get('job_scope')
+                if not scope:
+                    raise AccessError('A signed conversation scope is required.')
+                return bridge.env['jobhunter.chat.job.proposal']._prepare(scope['conversation_id'], arguments['arguments'])
             if operation in (*WORKFLOW_TOOLS, 'workflow_confirm'):
                 scope = claims.get('workflow') or {}
                 return bridge._workflow_execute(operation, arguments['arguments'], claims['context_refs'],

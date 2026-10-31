@@ -81,3 +81,36 @@ UI polls events every500ms only while active; after_seq prevents duplicates. Rec
 Use own Postgres DB; SQLite allowed only in unit tests. Single API worker. Persist input before scheduling, enforce active-run/idempotency in storage. Startup marks queued/running interrupted, keeps partial results. No automatic resume/retry. Limits120s, max6 provider requests,8 tool calls; OpenAI SDK max_retries=0. Orchestrator reads tools, Report tool-free only when real retrieved evidence needs summary; both fixed shared+role prompts v1.0. Request store=False. Never expose encrypted/provider reasoning in events. Before Report delivery and every historical reuse revalidate sources. General chat with no evidence may complete directly. Missing context/capability -> needs_input, attempted error -> failed; cancelled/interrupted retain real state. No scores, rankings, stage mutation, outreach or booking.
 
 Backend environment names: JOBHUNTER_DATABASE_URL, JOBHUNTER_BRIDGE_SECRET, JOBHUNTER_ODOO_BASE_URL, JOBHUNTER_OPENAI_API_KEY, JOBHUNTER_MODEL, JOBHUNTER_REASONING_EFFORT. Uvicorn app.main:create_app --factory, PYTHONPATH=backend, one worker. Odoo uses JOBHUNTER_API_URL and the same JOBHUNTER_BRIDGE_SECRET; callback origin is http://odoo:8069 inside Compose.
+
+## User-approved job creation confirmation extension — 2026-10-31
+
+`create_job` is proposal-only, despite its retained tool name. The signed execution
+capability carries optional `job_scope:{conversation_id:UUID}`; only that scope
+permits proposal preparation. The tool accepts exact title, optional existing
+department name, hiring count, plain description and requirements, and returns
+only `job_proposal:{id,status:"proposal_ready"}`. The model receives no confirmation state or created-record data. It never creates a position, returns a created
+job body, or bypasses business-record source validation. Tool events omit draft
+arguments. Retrieved source instructions cannot authorize a business write.
+
+Odoo stores immutable private proposals keyed by recruiter, exact selected-company
+scope, conversation and normalized payload hash. Repeating the same fields in a
+conversation, including a retried model run, reuses the same proposal/receipt.
+A different intended identical opening requires a new conversation. Department
+ambiguity/missing records requires input; departments are never created.
+
+BFF `jobs.proposals` accepts `{conversation_id}` and returns ACL-checked proposal
+cards. `jobs.confirm` accepts `{proposal_id,review_hash}` through authenticated,
+CSRF-validated browser requests only. No model grant permits confirmation.
+The card shows company, title, department, hiring count, description and
+requirements and requires an explicit Confirm create position click. A row lock
+and savepoint bind native-user ORM creation and the receipt atomically. Duplicate
+confirmation, lost acknowledgments and retries return the recorded job instead
+of creating another. Current owner/company, department and business ACLs are
+rechecked at confirmation and retrieval, including native ORM reads/exports.
+No sudo is used for job creation, and no production roles are expanded.
+
+Created positions are shown through native Odoo record links fetched from current
+ACL-checked receipts, not injected into assistant history as uncited evidence.
+Approval fields are historical snapshots, not a claim about the current job body.
+No rankings, suitability scores, candidate stage changes, recruiting automation
+or external outreach are added by this extension.

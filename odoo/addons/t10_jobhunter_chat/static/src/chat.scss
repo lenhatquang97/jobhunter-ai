@@ -239,3 +239,15 @@
   .jh-workflow-status, .jh-interview-status { font-size: 12px; color: #666; }
   @media (max-width: 600px) { .jh-workflows { padding: 8px 12px; max-height: 42vh; } .jh-workflow-toolbar label { width: 100%; } }
 }
+
+.o_jobhunter_chat .jh-job-proposal {
+  border: 1px solid #ddd; border-radius: 14px; padding: 18px; margin: 20px 0; min-width: 0;
+  p { color: #666; font-size: 13px; }
+  dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; margin: 16px 0; }
+  dt { color: #666; font-weight: 500; }
+  dd { margin: 0; overflow-wrap: anywhere; }
+  details { margin: 12px 0; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 180px; overflow: auto; font: inherit; }
+  button { border: 1px solid #222; border-radius: 20px; padding: 8px 16px; background: #222; color: white; }
+  button:disabled { opacity: .45; }
+}

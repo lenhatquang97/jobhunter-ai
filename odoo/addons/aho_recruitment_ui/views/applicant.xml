@@ -85,23 +85,10 @@
             <xpath expr="//notebook" position="before"><div class="alert alert-info" role="status" groups="hr_recruitment.group_hr_recruitment_user"><strong>Việc tiếp theo: </strong><field name="aho_next_action" readonly="1" class="d-inline"/></div></xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="CV" name="aho_cv_documents" groups="hr_recruitment.group_hr_recruitment_user">
-                    <p class="text-muted">Upload the candidate CV here. Filter, Interview and Report agents use these files together with the job description and company context.</p>
-                    <field name="cv_attachment_ids" widget="many2many_binary" options="{'accepted_file_extensions': '.pdf,.doc,.docx,.txt'}"/>
+                    <p class="text-muted">Upload a PDF, DOCX or text CV, then select it in Jobhunter Chat for cited analysis.</p>
+                    <p class="text-muted" invisible="id">Save this applicant before uploading a CV.</p><field name="cv_attachment_ids" widget="many2many_binary" options="{'accepted_file_extensions': '.pdf,.docx,.txt'}" invisible="not id"/>
                 </page>
-                <page string="Phỏng vấn tự động" groups="hr_recruitment.group_hr_recruitment_user">
-                    <p class="text-muted">Ứng viên trả lời bằng giọng nói qua link, AI hỏi theo JD và CV rồi viết báo cáo. Điểm và gợi ý chỉ để tham khảo; HR đọc bằng chứng trong báo cáo trước khi quyết định.</p>
-                    <p class="text-muted fst-italic" invisible="rag_interview_ids">Chưa có phiên phỏng vấn tự động cho hồ sơ này.</p>
-                    <field name="rag_interview_ids" readonly="1" invisible="not rag_interview_ids" context="{'form_view_ref': 'rag_interview_agent.rag_interview_form'}">
-                        <list create="0" delete="0">
-                            <field name="create_date" string="Ngày tạo"/>
-                            <field name="name" string="Phiên phỏng vấn"/>
-                            <field name="state" string="Trạng thái" widget="badge"/>
-                            <field name="score" string="Điểm tham khảo" invisible="state != 'reported'" width="[140]"/>
-                            <field name="recommendation" string="Gợi ý của AI" invisible="state != 'reported'"/>
-                        </list>
-                    </field>
-                </page>
-            </xpath>
+                </xpath>
         </field>
     </record>
 </odoo>

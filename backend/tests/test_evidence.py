@@ -372,3 +372,16 @@ async def test_source_free_answer_cannot_invent_a_citation(make_client):
     assert result["run"]["status"] == "failed"
     assert result["run"]["error"]["code"] == "invalid_citation"
     assert "Invented source" not in str(result)
+
+
+def test_job_tool_exposes_only_a_proposal_receipt():
+    from app.schemas import SafeError
+    from app.tools import filter_data
+
+    assert filter_data("create_job", {"job_proposal": {"id": 17, "status": "proposal_ready"}}) == {
+        "job_proposal": {"id": 17, "status": "proposal_ready"}
+    }
+    with pytest.raises(SafeError):
+        filter_data("create_job", {"job": {"id": 99, "name": "Unapproved write"}})
+    with pytest.raises(SafeError):
+        filter_data("create_job", {"job_proposal": {"id": 17, "status": "proposal_ready", "job": {"id": 99}}})

@@ -24,7 +24,7 @@ export class JobhunterChat extends Component {
             draft: "", contexts: [], notice: "", noticeCode: "", connected: false, copied: null,
             picker: false, pickerModel: "hr.job", pickerQuery: "", pickerRecords: [], pickerBusy: false,
             pickerParent: null, pickerError: "",
-            candidateIds: [], focusId: null, workflowCase: null, workflowBusy: false, workflowOpen: false,
+            jobProposals: [], jobBusy: false, candidateIds: [], focusId: null, workflowCase: null, workflowBusy: false, workflowOpen: false,
             scheduleStart: "", scheduleZone: "", scheduleDuration: "", participants: [], interviewUrl: "", interviewBusy: false,
         });
         this.generation = 0;
@@ -96,7 +96,7 @@ export class JobhunterChat extends Component {
         this.generation++;
         this.pendingSubmission = null;
         this.workflowGeneration = (this.workflowGeneration || 0) + 1;
-        Object.assign(this.state, {candidateIds: [], focusId: null, workflowCase: null, workflowBusy: false, workflowOpen: false, interviewUrl: "", participants: [], scheduleStart: "", scheduleZone: "", scheduleDuration: ""});
+        Object.assign(this.state, {jobProposals: [], jobBusy: false, candidateIds: [], focusId: null, workflowCase: null, workflowBusy: false, workflowOpen: false, interviewUrl: "", participants: [], scheduleStart: "", scheduleZone: "", scheduleDuration: ""});
         clearTimeout(this.pollTimer);
         Object.assign(this.state, { conversation: null, messages: [], runs: [], events: {}, cursors: {}, expanded: {}, draft: "", contexts: [], notice: "", sending: false, stopping: false, loading: false });
         this.followBottom = true;
@@ -106,7 +106,7 @@ export class JobhunterChat extends Component {
     async openConversation(id) {
         const generation = ++this.generation;
         this.workflowGeneration = (this.workflowGeneration || 0) + 1;
-        Object.assign(this.state, {interviewUrl: "", workflowCase: null, focusId: null, workflowOpen: false, interviewUrl: "", participants: [], scheduleStart: "", scheduleZone: "", scheduleDuration: ""});
+        Object.assign(this.state, {jobProposals: [], jobBusy: false, interviewUrl: "", workflowCase: null, focusId: null, workflowOpen: false, interviewUrl: "", participants: [], scheduleStart: "", scheduleZone: "", scheduleDuration: ""});
         clearTimeout(this.pollTimer);
         this.state.sending = false;
         this.state.stopping = false;
@@ -121,6 +121,7 @@ export class JobhunterChat extends Component {
             this.state.focusId = result.focused_applicant_id || null;
             if (this.state.focusId) this.refreshWorkflow();
             this.followBottom = true;
+            await this.refreshJobProposals(generation);
             for (const run of this.state.runs) {
                 await this.fetchRun(run.id, generation, true);
                 if (generation !== this.generation) return;
@@ -128,6 +129,36 @@ export class JobhunterChat extends Component {
             if (this.activeRun) this.schedulePoll(this.activeRun.id, generation);
         } catch (error) { if (generation === this.generation) this.showError(error); }
         finally { if (generation === this.generation) this.state.loading = false; }
+    }
+
+    async refreshJobProposals(generation = this.generation) {
+        if (generation !== this.generation || this.destroyed) return;
+        const id = this.state.conversation?.id;
+        if (!id) return;
+        const result = await this.call("jobs.proposals", {conversation_id: id});
+        if (generation === this.generation && !this.destroyed && this.state.conversation?.id === id) this.state.jobProposals = result.proposals || [];
+    }
+
+    async confirmJob(proposal) {
+        if (this.state.jobBusy || this.state.sending || this.activeRun || proposal.status !== "pending") return;
+        const generation = this.generation;
+        this.state.jobBusy = true;
+        try {
+            await this.call("jobs.confirm", {proposal_id: proposal.id, review_hash: proposal.review_hash});
+            await this.refreshJobProposals(generation);
+        } catch (error) {
+            if (generation === this.generation) {
+                this.showError(error);
+                try {
+                    await this.refreshJobProposals(generation);
+                    if (this.state.jobProposals.some(item => item.id === proposal.id && item.status === "created")) this.state.notice = "Position created; confirmation receipt recovered.";
+                } catch { /* A manual retry uses the same immutable proposal. */ }
+            }
+        } finally { if (generation === this.generation) this.state.jobBusy = false; }
+    }
+
+    openCreatedJob(proposal) {
+        if (proposal.job_id) this.action.doAction({type: "ir.actions.act_window", res_model: "hr.job", res_id: proposal.job_id, views: [[false, "form"]], target: "current"});
     }
 
     async archiveConversation(id) {
@@ -203,6 +234,10 @@ export class JobhunterChat extends Component {
             // Final publication is atomic: a completed run can still have later event pages.
             if (!runIsActive(result.run)) {
                 drain = true;
+                if (this.jobRefreshedRun !== id && merged.events.some(event => event.type === "tool.completed" && event.payload?.name === "create_job")) {
+                    await this.refreshJobProposals(generation);
+                    this.jobRefreshedRun = id;
+                }
                 if (this.state.focusId && this.workflowRefreshedRun !== id) { this.workflowRefreshedRun = id; this.refreshWorkflow(); }
             }
             if (!drain || !result.events?.length || merged.next_seq === cursor) return;

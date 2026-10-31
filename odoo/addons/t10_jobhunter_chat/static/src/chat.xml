@@ -135,6 +135,22 @@
                   </t>
                 </div>
               </article>
+              <section t-foreach="this.state.jobProposals" t-as="proposal" t-key="proposal.id" class="jh-job-proposal" aria-label="Job creation proposal">
+                <strong t-out="proposal.status === 'created' ? 'Position created from approved draft' : 'Review proposed position'"/>
+                <p t-if="proposal.status === 'pending'">No position has been created. Confirm only after reviewing every field below.</p>
+                <dl>
+                  <dt>Company</dt><dd t-out="proposal.company_name"/>
+                  <dt>Title</dt><dd t-out="proposal.fields.name"/>
+                  <dt>Department</dt><dd t-out="proposal.fields.department_name || 'Not provided'"/>
+                  <dt>Hiring count</dt><dd t-out="proposal.fields.number_of_recruitment"/>
+                </dl>
+                <details open="open"><summary>Description and requirements</summary>
+                  <strong>Description</strong><pre t-out="proposal.fields.description || 'Not provided'"/>
+                  <strong>Requirements</strong><pre t-out="proposal.fields.requirements || 'Not provided'"/>
+                </details>
+                <button t-if="proposal.status === 'pending'" class="jh-confirm-job" t-att-disabled="this.state.jobBusy || this.state.sending || !!this.activeRun" t-on-click="() => this.confirmJob(proposal)">Confirm create position</button>
+                <button t-elif="proposal.job_id" class="jh-open-job" t-on-click="() => this.openCreatedJob(proposal)">Open created position</button>
+              </section>
             </div>
           </div>
           <div class="jh-compose-area">

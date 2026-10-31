@@ -603,7 +603,7 @@ class Service:
                         }
                     )
                 await self.event(
-                    rid, "tool.started", {"name": name, "arguments": args}, "Orchestrator", call_id
+                    rid, "tool.started", {"name": name, "arguments": {} if name == "create_job" else args}, "Orchestrator", call_id
                 )
                 try:
                     result = await self.bridge.call(
@@ -687,7 +687,7 @@ class Service:
                     await self.event(
                         rid,
                         "tool.completed",
-                        {"name": name, "summary": "Job created." if name == "create_job" else "Read completed.", "sources": registered},
+                        {"name": name, "summary": "Job proposal prepared; recruiter confirmation required." if name == "create_job" else "Read completed.", "sources": registered},
                         "Orchestrator",
                         call_id,
                     )

@@ -17,3 +17,6 @@ workflow_answer_c,Private workflow answer c,jobhunter.chat.answer,hr_recruitment
 workflow_answer_w,Private workflow answer w,jobhunter.chat.answer,hr_recruitment.group_hr_recruitment_interviewer,u,"[('owner_id', '=', user.id), ('company_id', 'in', company_ids)]"
 workflow_mail_own_create,Workflow candidate invitation create,mail.mail,hr_recruitment.group_hr_recruitment_interviewer,c,"[('jobhunter_workflow_session_id.owner_id', '=', user.id), ('jobhunter_workflow_session_id.company_id', 'in', company_ids)]"
 workflow_mail_own_read,Workflow candidate invitation read,mail.mail,hr_recruitment.group_hr_recruitment_interviewer,r,"[('jobhunter_workflow_session_id.owner_id', '=', user.id), ('jobhunter_workflow_session_id.company_id', 'in', company_ids)]"
+job_proposal_r,Private job proposal r,jobhunter.chat.job.proposal,hr_recruitment.group_hr_recruitment_interviewer,r,"[('owner_id', '=', user.id), ('company_id', 'in', company_ids)]"
+job_proposal_c,Private job proposal c,jobhunter.chat.job.proposal,hr_recruitment.group_hr_recruitment_interviewer,c,"[('owner_id', '=', user.id), ('company_id', 'in', company_ids)]"
+job_proposal_u,Private job proposal u,jobhunter.chat.job.proposal,hr_recruitment.group_hr_recruitment_interviewer,u,"[('owner_id', '=', user.id), ('company_id', 'in', company_ids)]"

@@ -11,7 +11,7 @@ from odoo.tools.misc import hash_sign, verify_hash_signed
 
 WORKFLOW_TOOLS = ('workflow_context', 'workflow_save', 'workflow_schedule', 'workflow_prepare', 'workflow_prepare_direct')
 WORKFLOW_MODELS = ('jobhunter.chat.case', 'jobhunter.chat.artifact', 'jobhunter.chat.answer')
-TOOLS = ('search_jobs', 'get_job', 'search_applicants', 'get_applicant', 'list_documents', 'read_document', 'create_job')
+TOOLS = ('search_jobs', 'get_job', 'search_applicants', 'get_applicant', 'list_documents', 'read_document')
 FIELDS = {
     'hr.job': ('id', 'name', 'active', 'description', 'requirements', 'department_id', 'company_id', 'write_date'),
     'hr.applicant': ('id', 'partner_name', 'job_id', 'stage_id', 'active', 'company_id', 'create_date', 'write_date'),
@@ -216,43 +216,10 @@ class ChatBridge(models.AbstractModel):
                 return self._workflow_execute(operation, arguments, refs)
             shapes = {'search_jobs': ('query', 'limit'), 'get_job': ('job_id',),
                       'search_applicants': ('query', 'job_id', 'limit'), 'get_applicant': ('applicant_id',),
-                      'list_documents': ('model', 'record_id'), 'read_document': ('attachment_id',),
-                      'create_job': ('name', 'department_name', 'number_of_recruitment', 'description', 'requirements')}
+                      'list_documents': ('model', 'record_id'), 'read_document': ('attachment_id',)}
             if operation not in shapes:
                 raise ValidationError('Unknown operation.')
             strict(arguments, shapes[operation])
-            if operation == 'create_job':
-                name = arguments['name'].strip()
-                department_name = arguments['department_name']
-                description = arguments['description'].strip()
-                requirements = arguments['requirements'].strip()
-                count = arguments['number_of_recruitment']
-                if not name or len(name) > 300 or not isinstance(count, int) or not 1 <= count <= 1000:
-                    raise ValidationError('Invalid job fields.')
-                for value in (department_name, description, requirements):
-                    if value is not None and not isinstance(value, str):
-                        raise ValidationError('Invalid job fields.')
-                company = self.env.company
-                department = self.env['hr.department']
-                department_id = False
-                if department_name and department_name.strip():
-                    department = department.search([
-                        ('name', '=ilike', department_name.strip()),
-                        '|', ('company_id', '=', company.id), ('company_id', '=', False),
-                    ], limit=1)
-                    if not department:
-                        raise ValidationError('Needs input: the requested department does not exist.')
-                    department_id = department.id
-                job = self.env['hr.job'].create({
-                    'name': name,
-                    'company_id': company.id,
-                    'department_id': department_id,
-                    'no_of_recruitment': count,
-                    'description': description,
-                    'requirements': requirements,
-                })
-                values = self._values(job, FIELDS['hr.job'])
-                return {'ok': True, 'data': {'job': values}, 'sources': []}
             for key in ('job_id', 'applicant_id', 'record_id', 'attachment_id'):
                 if key in arguments and not (key == 'job_id' and operation == 'search_applicants' and arguments[key] is None):
                     positive(arguments[key])
@@ -426,7 +393,7 @@ class ChatBridge(models.AbstractModel):
             states.append({'key': key, 'state': state})
         return states
 
-    def _issue_grant(self, run_id, context_refs, purpose, workflow=None):
+    def _issue_grant(self, run_id, context_refs, purpose, workflow=None, job_scope=None):
         principal = self._principal()
         run_id = uuid(run_id)
         if purpose not in ('execution', 'validation'):
@@ -436,13 +403,19 @@ class ChatBridge(models.AbstractModel):
         now = datetime.now(timezone.utc)
         claims = {'aud': 't10_jobhunter_chat', 'version': 1, 'database_uuid': principal['database_uuid'],
                   'database': self.env.cr.dbname, 'uid': principal['user_id'], 'companies': principal['company_ids'],
-                  'run_id': run_id, 'purpose': purpose, 'tools': self._grant_tools(purpose, workflow),
+                  'run_id': run_id, 'purpose': purpose, 'tools': self._grant_tools(purpose, workflow, job_scope),
                   'context_refs': refs, 'token_id': str(uuid4()), 'issued_at': int(now.timestamp()), 'expires_at': int((now + timedelta(minutes=5)).timestamp())}
         if workflow is not None:
             if purpose != 'execution' or not isinstance(workflow, dict) or set(workflow) != {'applicant_id', 'approval_id'}:
                 raise ValidationError('Invalid workflow capability.')
             self._workflow_anchor(workflow['applicant_id'], refs)
             claims['workflow'] = workflow
+        if job_scope is not None:
+            if purpose != 'execution':
+                raise ValidationError('Invalid job proposal capability.')
+            strict(job_scope, ('conversation_id',))
+            uuid(job_scope['conversation_id'])
+            claims['job_scope'] = job_scope
         grant = self.env['jobhunter.chat.grant'].sudo().create({
             'token_id': claims['token_id'], 'run_id': run_id, 'user_id': self.env.uid,
             'database_name': self.env.cr.dbname, 'claims': claims,
@@ -457,7 +430,7 @@ class ChatBridge(models.AbstractModel):
                 raise ValueError()
             claims = verify_hash_signed(self.sudo().env, 't10_jobhunter_chat', token)
             expected = {'aud', 'version', 'database_uuid', 'database', 'uid', 'companies', 'run_id', 'purpose', 'tools', 'context_refs', 'token_id', 'issued_at', 'expires_at'}
-            if not isinstance(claims, dict) or set(claims) not in (expected, expected | {'workflow'}):
+            if not isinstance(claims, dict) or not expected <= set(claims) or set(claims) - expected - {'workflow', 'job_scope'}:
                 raise ValueError()
             now = datetime.now(timezone.utc).timestamp()
             if claims['aud'] != 't10_jobhunter_chat' or claims['version'] != 1 or claims['database_uuid'] != self._database_uuid() or claims['database'] != database or claims['run_id'] != uuid(run_id):
@@ -466,7 +439,12 @@ class ChatBridge(models.AbstractModel):
                 raise ValueError()
             if type(claims['expires_at']) is not int or type(claims['issued_at']) is not int or not claims['issued_at'] <= now < claims['expires_at'] or not 0 < claims['expires_at'] - claims['issued_at'] <= 300:
                 raise ValueError()
-            tools = self._grant_tools(claims['purpose'], claims.get('workflow'))
+            if 'job_scope' in claims:
+                if claims['purpose'] != 'execution':
+                    raise ValueError()
+                strict(claims['job_scope'], ('conversation_id',))
+                uuid(claims['job_scope']['conversation_id'])
+            tools = self._grant_tools(claims['purpose'], claims.get('workflow'), claims.get('job_scope'))
             if claims['tools'] != tools or operation not in tools:
                 raise ValueError()
             grant = self.env['jobhunter.chat.grant'].sudo().search([('token_id', '=', claims['token_id']), ('active', '=', True)], limit=1)
@@ -484,10 +462,10 @@ class ChatBridge(models.AbstractModel):
         grants.filtered(lambda grant: grant.claims.get('companies') == principal['company_ids']).write({'active': False})
 
 
-    def _grant_tools(self, purpose, workflow=None):
+    def _grant_tools(self, purpose, workflow=None, job_scope=None):
         if purpose != 'execution':
             return ['validate_sources']
-        return [*TOOLS, *WORKFLOW_TOOLS, *(['workflow_confirm'] if workflow and workflow.get('approval_id') else []), 'validate_sources']
+        return [*TOOLS, *(['create_job'] if job_scope else []), *WORKFLOW_TOOLS, *(['workflow_confirm'] if workflow and workflow.get('approval_id') else []), 'validate_sources']
 
     def _workflow_anchor(self, applicant_id, refs):
         positive(applicant_id)

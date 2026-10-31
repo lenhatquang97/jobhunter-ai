@@ -319,46 +319,6 @@ body:has(.aho-sidebar-brand) {
     }
 }
 
-/* Search is rendered by the control panel, which is not always nested under
-   .o_action_manager. Keep this override at the page scope so Odoo's native
-   focus border cannot recolor only one side of the field. */
-body:has(.aho-sidebar-brand) .o_searchview,
-body:has(.aho-sidebar-brand) .o_searchview:focus,
-body:has(.aho-sidebar-brand) .o_searchview:focus-within {
-    border: 1px solid var(--aho-outline) !important;
-    border-color: var(--aho-outline) !important;
-    box-shadow: none !important;
-    outline: none !important;
-}
-
-body:has(.aho-sidebar-brand) .o_searchview .o_searchview_input_container,
-body:has(.aho-sidebar-brand) .o_searchview .o_searchview_input,
-body:has(.aho-sidebar-brand) .o_searchview input,
-body:has(.aho-sidebar-brand) .o_searchview input:focus {
-    border: 0 !important;
-    border-color: transparent !important;
-    box-shadow: none !important;
-    outline: none !important;
-}
-
-body:has(.aho-sidebar-brand) .o_searchview:focus-within + .o_searchview_dropdown_toggler {
-    border: 1px solid var(--aho-outline) !important;
-    border-top-color: var(--aho-outline) !important;
-    border-right-color: var(--aho-outline) !important;
-    border-bottom-color: var(--aho-outline) !important;
-    box-shadow: none !important;
-    outline: none !important;
-}
-
-body:has(.aho-sidebar-brand) .o_searchview_dropdown_toggler,
-body:has(.aho-sidebar-brand) .o_searchview_dropdown_toggler:focus,
-body:has(.aho-sidebar-brand) .o_searchview_dropdown_toggler:focus-visible {
-    display: none !important;
-    border-color: var(--aho-outline) !important;
-    box-shadow: none !important;
-    outline: none !important;
-}
-
 /* ---------- Kanban grid and columns ---------- */
 @media screen and (min-width: 992px) {
     body:has(.aho-sidebar-brand) {

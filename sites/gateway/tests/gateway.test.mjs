@@ -112,3 +112,17 @@ test('double-slash and encoded separators never change the fixed upstream origin
   }
   assert.equal(calls,3);
 });
+
+test('preserves multiple cookies with the Workers-specific Headers API', async () => {
+  const response = new Response('worker cookies');
+  response.headers.getSetCookie = undefined;
+  response.headers.getAll = key => {
+    assert.equal(key.toLowerCase(),'set-cookie');
+    return ['session_id=worker; Path=/; HttpOnly','cids=1; Path=/'];
+  };
+  globalThis.fetch = async () => response;
+  const result = await worker.fetch(request('/web/login'),env);
+  assert.deepEqual(result.headers.getSetCookie(),[
+    'session_id=worker; Path=/; HttpOnly; Secure','cids=1; Path=/; Secure',
+  ]);
+});

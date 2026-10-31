@@ -65,7 +65,8 @@ export default {
         if (target.origin === upstream.origin) outgoing.set(key, canonical.origin + target.pathname + target.search + target.hash);
       } catch { outgoing.delete(key); }
     }
-    const cookies = response.headers.getSetCookie();
+    const cookies = typeof response.headers.getAll === 'function'
+      ? response.headers.getAll('set-cookie') : response.headers.getSetCookie();
     outgoing.delete('set-cookie');
     for (let cookie of cookies) {
       cookie = cookie.replace(/;\s*Domain=[^;]+/ig,'');

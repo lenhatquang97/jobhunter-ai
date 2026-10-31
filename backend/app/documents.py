@@ -118,13 +118,18 @@ async def extract_document_async(document):
     encoded = json.dumps(document).encode()
     if len(encoded) > 14 * 1024 * 1024:
         raise ValueError("Document needs readable supported text")
+    allowed_env = {"PATH", "LANG", "LC_ALL"}
+    if os.name == "nt":
+        # Windows process startup and tempfile handling require these host
+        # locations; provider credentials remain excluded.
+        allowed_env.update({"SYSTEMROOT", "WINDIR", "TEMP", "TMP"})
     process = await asyncio.create_subprocess_exec(
         sys.executable,
         str(Path(__file__).resolve()),
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.DEVNULL,
-        env={key: value for key, value in os.environ.items() if key in {"PATH", "LANG", "LC_ALL"}},
+        env={key: value for key, value in os.environ.items() if key.upper() in allowed_env},
     )
     try:
         async with asyncio.timeout(8):
@@ -144,12 +149,17 @@ async def extract_document_async(document):
 
 def _parser_main():
     import logging
-    import resource
 
     logging.disable(logging.CRITICAL)
-    resource.setrlimit(resource.RLIMIT_CPU, (5, 5))
-    if sys.platform != "darwin":
-        resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
+    if os.name != "nt":
+        # The production Linux worker has hard parser limits. Windows has no
+        # resource module, so local development relies on the parent's timeout
+        # and output bounds while retaining subprocess isolation.
+        import resource
+
+        resource.setrlimit(resource.RLIMIT_CPU, (5, 5))
+        if sys.platform != "darwin":
+            resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
     try:
         document = json.loads(sys.stdin.buffer.read(14 * 1024 * 1024 + 1))
         sys.stdout.write(json.dumps(extract_document(document), ensure_ascii=True))

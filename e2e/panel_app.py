@@ -22,6 +22,7 @@ class ControlledResponses:
         if not tools and answers:
             source = answers[-1]
             answer = json.loads(source["excerpt"])["answer"]
+            answer = answer.replace('"', "'").replace("“", "'").replace("”", "'")
             result = {
                 "text": f"Submitted interview evidence (candidate self-report): {answer} [{source['key']}]"
             }

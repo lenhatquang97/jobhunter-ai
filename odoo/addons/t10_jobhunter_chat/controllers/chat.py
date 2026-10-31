@@ -208,7 +208,7 @@ class JobhunterChat(http.Controller):
                     if not isinstance(workflow, dict) or set(workflow) not in ({'action', 'applicant_id'}, {'action', 'applicant_id', 'data'}):
                         raise ValidationError('Invalid workflow request.')
                     workflow = {**workflow, 'data': workflow.get('data', {})}
-                    if workflow['action'] not in ('screen', 'schedule', 'report', 'confirm', 'prepare_interview') or not isinstance(workflow['data'], dict):
+                    if workflow['action'] not in ('screen', 'schedule', 'report', 'confirm', 'prepare_interview', 'orchestrate') or not isinstance(workflow['data'], dict):
                         raise ValidationError('Invalid workflow request.')
                     bridge._workflow_anchor(positive(workflow['applicant_id']), refs)
                     if len(json.dumps(workflow['data'])) > 16000:

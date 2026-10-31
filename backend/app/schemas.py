@@ -42,7 +42,9 @@ class ContextRef(StrictModel):
 
 
 class WorkflowRequest(StrictModel):
-    action: Literal["screen", "schedule", "report", "confirm", "prepare_interview"]
+    action: Literal[
+        "screen", "schedule", "report", "confirm", "prepare_interview", "orchestrate"
+    ]
     applicant_id: StrictInt = Field(gt=0)
     data: dict = Field(default_factory=dict)
 
@@ -55,6 +57,7 @@ class WorkflowRequest(StrictModel):
             "prepare_interview": set(),
             "report": set(),
             "schedule": {"schedule"},
+            "orchestrate": set(),
             "confirm": {"draft_version"},
         }
         if set(self.data) - permitted[self.action]:

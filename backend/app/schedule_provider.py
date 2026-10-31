@@ -9,7 +9,7 @@ import hmac
 import os
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 import httpx
@@ -252,3 +252,264 @@ class SeaPostgresScheduleProvider:
         except Exception as exc:
             raise ScheduleProviderError(f"Sea demo candidate lookup failed: {type(exc).__name__}") from exc
         return [str(row[0]) for row in rows]
+
+    def list_schedule_candidates(self, limit: int = 20) -> list[dict]:
+        """Return recruiter-visible demo candidates with their assigned job interviewers."""
+        limit = max(1, min(limit, 50))
+        try:
+            import psycopg
+
+            with psycopg.connect(self._url(), connect_timeout=8) as connection:
+                connection.execute("SET TRANSACTION READ ONLY")
+                rows = connection.execute(
+                    """
+                    SELECT a.id, a.name, a.email, j.id, j.title,
+                           COALESCE(j.interview_duration_minutes, 30)
+                    FROM applicant a JOIN job j ON j.id = a.job_id
+                    WHERE NOT a.archived AND j.is_open
+                    ORDER BY a.id LIMIT %s
+                    """,
+                    (limit,),
+                ).fetchall()
+                output = []
+                for row in rows:
+                    interviewers = connection.execute(
+                        """
+                        SELECT u.id, u.name, u.email, (g.refresh_token IS NOT NULL)
+                        FROM job_interviewer ji
+                        JOIN app_user u ON u.id = ji.user_id AND u.is_active
+                        LEFT JOIN google_credential g ON g.user_id = u.id
+                        WHERE ji.job_id = %s ORDER BY u.id
+                        """,
+                        (row[3],),
+                    ).fetchall()
+                    output.append({
+                        "candidate_ref": str(row[0]), "candidate_name": row[1],
+                        "candidate_email": row[2], "job_ref": str(row[3]),
+                        "job_title": row[4], "duration_minutes": row[5],
+                        "interviewers": [
+                            {"ref": str(item[0]), "name": item[1], "email": item[2],
+                             "google_connected": bool(item[3])}
+                            for item in interviewers
+                        ],
+                    })
+                return output
+        except Exception as exc:
+            raise ScheduleProviderError(f"Schedule candidate lookup failed: {type(exc).__name__}") from exc
+
+    def find_earliest_internal_slot(
+        self, candidate_ref: str, *, days: int = 14, timezone_name: str = "Asia/Ho_Chi_Minh"
+    ) -> dict:
+        """Find the first shared slot against persisted interviews for all assigned interviewers."""
+        from zoneinfo import ZoneInfo
+
+        candidates = [item for item in self.list_schedule_candidates(50)
+                      if item["candidate_ref"] == candidate_ref]
+        if not candidates:
+            raise ScheduleProviderError(f"candidate {candidate_ref} was not found")
+        candidate = candidates[0]
+        interviewers = candidate["interviewers"]
+        if not interviewers:
+            raise ScheduleProviderError("the candidate's job has no assigned interviewers")
+        zone = ZoneInfo(timezone_name)
+        now = datetime.now(zone)
+        start_day = now.date() + timedelta(days=1)
+        duration = timedelta(minutes=int(candidate["duration_minutes"] or 30))
+        try:
+            import psycopg
+
+            with psycopg.connect(self._url(), connect_timeout=8) as connection:
+                connection.execute("SET TRANSACTION READ ONLY")
+                for offset in range(days):
+                    day = start_day + timedelta(days=offset)
+                    if day.weekday() >= 5:
+                        continue
+                    slot = datetime.combine(day, datetime.min.time(), zone) + timedelta(hours=9)
+                    end_of_day = slot.replace(hour=17)
+                    while slot + duration <= end_of_day:
+                        end = slot + duration
+                        busy = connection.execute(
+                            """
+                            SELECT count(*) FROM interview
+                            WHERE lower(interviewer_email) = ANY(%s)
+                              AND status = 'scheduled' AND start < %s AND "end" > %s
+                            """,
+                            ([item["email"].lower() for item in interviewers],
+                             end.astimezone(timezone.utc), slot.astimezone(timezone.utc)),
+                        ).fetchone()[0]
+                        google_verified = all(i["google_connected"] for i in interviewers)
+                        google_free = True
+                        if busy == 0 and google_verified:
+                            google_free = all(
+                                self.check_interviewer_free(item["ref"], slot, end).available
+                                for item in interviewers
+                            )
+                        if busy == 0 and google_free:
+                            return {
+                                "candidate": candidate,
+                                "scheduled_for": slot.isoformat(),
+                                "duration_minutes": int(duration.total_seconds() / 60),
+                                "timezone": timezone_name,
+                                "response_deadline": (slot - timedelta(hours=16)).isoformat(),
+                                "availability_source": "persisted interviews",
+                                "google_verified": google_verified,
+                            }
+                        slot += timedelta(minutes=30)
+        except ScheduleProviderError:
+            raise
+        except Exception as exc:
+            raise ScheduleProviderError(f"Availability scan failed: {type(exc).__name__}") from exc
+        raise ScheduleProviderError(f"no shared slot found in the next {days} days")
+
+    def list_schedule_jobs(self, limit: int = 20) -> list[dict]:
+        """Group recruiter-visible candidates and assigned interviewers by open job."""
+        candidates = self.list_schedule_candidates(50)
+        jobs: dict[str, dict] = {}
+        for candidate in candidates:
+            job = jobs.setdefault(candidate["job_ref"], {
+                "job_ref": candidate["job_ref"], "job_title": candidate["job_title"],
+                "duration_minutes": candidate["duration_minutes"],
+                "interviewers": candidate["interviewers"], "candidates": [],
+            })
+            job["candidates"].append({
+                "candidate_ref": candidate["candidate_ref"],
+                "candidate_name": candidate["candidate_name"],
+                "candidate_email": candidate["candidate_email"],
+            })
+        return list(jobs.values())[:max(1, min(limit, 50))]
+
+    def plan_job_slots(
+        self, job_ref: str, candidate_refs: list[str], *, days: int = 14,
+        timezone_name: str = "Asia/Ho_Chi_Minh",
+    ) -> dict:
+        """Assign sequential, non-overlapping shared slots for selected candidates of one job."""
+        from zoneinfo import ZoneInfo
+
+        jobs = {item["job_ref"]: item for item in self.list_schedule_jobs(50)}
+        job = jobs.get(job_ref)
+        if not job:
+            raise ScheduleProviderError(f"job {job_ref} was not found")
+        known = {item["candidate_ref"]: item for item in job["candidates"]}
+        if not candidate_refs or any(ref not in known for ref in candidate_refs):
+            raise ScheduleProviderError("every selected candidate must belong to the selected job")
+        interviewers = job["interviewers"]
+        if not interviewers:
+            raise ScheduleProviderError("the selected job has no assigned interviewers")
+        zone = ZoneInfo(timezone_name)
+        duration = timedelta(minutes=int(job["duration_minutes"] or 30))
+        start_day = datetime.now(zone).date() + timedelta(days=1)
+        slots: list[datetime] = []
+        try:
+            import psycopg
+
+            with psycopg.connect(self._url(), connect_timeout=8) as connection:
+                connection.execute("SET TRANSACTION READ ONLY")
+                for offset in range(days):
+                    day = start_day + timedelta(days=offset)
+                    if day.weekday() >= 5:
+                        continue
+                    slot = datetime.combine(day, datetime.min.time(), zone) + timedelta(hours=9)
+                    end_of_day = slot.replace(hour=17)
+                    while slot + duration <= end_of_day and len(slots) < len(candidate_refs):
+                        end = slot + duration
+                        busy = connection.execute(
+                            """
+                            SELECT count(*) FROM interview
+                            WHERE lower(interviewer_email) = ANY(%s)
+                              AND status = 'scheduled' AND start < %s AND "end" > %s
+                            """,
+                            ([item["email"].lower() for item in interviewers],
+                             end.astimezone(timezone.utc), slot.astimezone(timezone.utc)),
+                        ).fetchone()[0]
+                        google_verified = all(item["google_connected"] for item in interviewers)
+                        google_free = True
+                        if busy == 0 and google_verified:
+                            google_free = all(
+                                self.check_interviewer_free(item["ref"], slot, end).available
+                                for item in interviewers
+                            )
+                        overlaps_proposal = any(
+                            slot < existing + duration and end > existing for existing in slots
+                        )
+                        if busy == 0 and google_free and not overlaps_proposal:
+                            slots.append(slot)
+                        slot += timedelta(minutes=30)
+                    if len(slots) == len(candidate_refs):
+                        break
+        except ScheduleProviderError:
+            raise
+        except Exception as exc:
+            raise ScheduleProviderError(f"Job availability scan failed: {type(exc).__name__}") from exc
+        if len(slots) != len(candidate_refs):
+            raise ScheduleProviderError(f"not enough shared slots found in the next {days} days")
+        return {
+            "job": job, "timezone": timezone_name,
+            "google_verified": all(item["google_connected"] for item in interviewers),
+            "availability_source": "persisted interviews",
+            "busy_windows": self.job_busy_windows(job_ref, days=days, timezone_name=timezone_name),
+            "proposals": [{
+                "candidate": known[ref], "scheduled_for": slot.isoformat(),
+                "response_deadline": (slot - timedelta(hours=16)).isoformat(),
+                "duration_minutes": int(duration.total_seconds() / 60),
+            } for ref, slot in zip(candidate_refs, slots, strict=True)],
+        }
+
+    def job_busy_windows(
+        self, job_ref: str, *, days: int = 14, timezone_name: str = "Asia/Ho_Chi_Minh"
+    ) -> list[dict]:
+        """Expose only busy time ranges, never private calendar titles or descriptions."""
+        from zoneinfo import ZoneInfo
+
+        jobs = {item["job_ref"]: item for item in self.list_schedule_jobs(50)}
+        job = jobs.get(job_ref)
+        if not job:
+            raise ScheduleProviderError(f"job {job_ref} was not found")
+        zone = ZoneInfo(timezone_name)
+        start = datetime.combine(datetime.now(zone).date() + timedelta(days=1), datetime.min.time(), zone)
+        end = start + timedelta(days=days)
+        interviewers = job["interviewers"]
+        by_email = {item["email"].lower(): item for item in interviewers}
+        windows: list[dict] = []
+        try:
+            import psycopg
+
+            with psycopg.connect(self._url(), connect_timeout=8) as connection:
+                connection.execute("SET TRANSACTION READ ONLY")
+                rows = connection.execute(
+                    """
+                    SELECT interviewer_email, start, "end" FROM interview
+                    WHERE lower(interviewer_email) = ANY(%s) AND status = 'scheduled'
+                      AND start < %s AND "end" > %s ORDER BY start
+                    """,
+                    (list(by_email), end.astimezone(timezone.utc), start.astimezone(timezone.utc)),
+                ).fetchall()
+                for email, busy_start, busy_end in rows:
+                    interviewer = by_email.get(email.lower())
+                    if interviewer:
+                        windows.append({
+                            "interviewer_ref": interviewer["ref"], "interviewer_name": interviewer["name"],
+                            "start": busy_start.astimezone(zone).isoformat(),
+                            "end": busy_end.astimezone(zone).isoformat(), "source": "Internal calendar",
+                        })
+                credentials = connection.execute(
+                    """
+                    SELECT u.id, g.refresh_token FROM app_user u
+                    JOIN google_credential g ON g.user_id = u.id
+                    WHERE u.id = ANY(%s) AND g.refresh_token IS NOT NULL
+                    """,
+                    ([int(item["ref"]) for item in interviewers],),
+                ).fetchall()
+            by_ref = {item["ref"]: item for item in interviewers}
+            for interviewer_id, refresh_token in credentials:
+                interviewer = by_ref[str(interviewer_id)]
+                for block in self._google_busy(refresh_token, start, end):
+                    windows.append({
+                        "interviewer_ref": str(interviewer_id),
+                        "interviewer_name": interviewer["name"],
+                        "start": block["start"], "end": block["end"], "source": "Google FreeBusy",
+                    })
+        except ScheduleProviderError:
+            raise
+        except Exception as exc:
+            raise ScheduleProviderError(f"Busy-window lookup failed: {type(exc).__name__}") from exc
+        return sorted(windows, key=lambda item: (item["start"], item["interviewer_ref"]))

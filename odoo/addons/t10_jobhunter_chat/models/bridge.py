@@ -9,7 +9,11 @@ from odoo import fields, models
 from odoo.exceptions import AccessError, MissingError, ValidationError
 from odoo.tools.misc import hash_sign, verify_hash_signed
 
-WORKFLOW_TOOLS = ('workflow_context', 'workflow_save', 'workflow_schedule', 'workflow_prepare', 'workflow_prepare_direct')
+WORKFLOW_TOOLS = (
+    'workflow_context', 'workflow_save', 'workflow_schedule', 'workflow_prepare',
+    'workflow_prepare_direct', 'workflow_automation_start',
+    'workflow_auto_schedule', 'workflow_dispatch',
+)
 WORKFLOW_MODELS = ('jobhunter.chat.case', 'jobhunter.chat.artifact', 'jobhunter.chat.answer')
 TOOLS = ('search_jobs', 'get_job', 'search_applicants', 'get_applicant', 'list_documents', 'read_document')
 FIELDS = {
@@ -479,6 +483,9 @@ class ChatBridge(models.AbstractModel):
                   'workflow_schedule': ('case_id', 'expected_version', 'schedule'),
                   'workflow_prepare': ('case_id', 'expected_version', 'language', 'questions'),
                   'workflow_prepare_direct': ('case_id', 'expected_version', 'language', 'questions'),
+                  'workflow_automation_start': ('case_id', 'expected_version'),
+                  'workflow_auto_schedule': ('case_id', 'expected_version'),
+                  'workflow_dispatch': ('case_id', 'expected_version'),
                   'workflow_confirm': ('case_id', 'draft_version')}
         strict(arguments, shapes[operation])
         if operation == 'workflow_context':
@@ -502,6 +509,12 @@ class ChatBridge(models.AbstractModel):
             result = case._prepare(arguments['expected_version'], arguments['language'], arguments['questions'])
         elif operation == 'workflow_prepare_direct':
             result = case._prepare_direct(arguments['expected_version'], arguments['language'], arguments['questions'])
+        elif operation == 'workflow_automation_start':
+            result = case._automation_start(arguments['expected_version'])
+        elif operation == 'workflow_auto_schedule':
+            result = case._auto_schedule(arguments['expected_version'])
+        elif operation == 'workflow_dispatch':
+            result = case._automation_dispatch(arguments['expected_version'])
         else:
             if not approval_id:
                 raise AccessError('Explicit browser confirmation is required.')

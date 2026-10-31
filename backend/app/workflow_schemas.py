@@ -59,7 +59,7 @@ class Guide(StrictModel):
 
 
 class Route(StrictModel):
-    action: Literal["screen", "schedule", "report", "prepare_interview"]
+    action: Literal["screen", "schedule", "report", "prepare_interview", "orchestrate"]
     applicant_id: StrictInt | None = Field(gt=0)
 
 
@@ -90,5 +90,5 @@ def function(name, model, description):
 ROUTING_TOOL = function(
     "candidate_workflow",
     Route,
-    "Route an explicitly selected applicant to CV screening, direct typed interview preparation, scheduling or an evidence report. Never guess applicant identity. This cannot approve criteria, book or send mail.",
+    "Route an explicitly selected applicant to CV screening, direct typed interview preparation, scheduling, an evidence report, or the bounded full preparation flow. Never guess applicant identity. This cannot approve criteria, book or send mail.",
 )

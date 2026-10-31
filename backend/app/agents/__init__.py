@@ -4,7 +4,7 @@ No Odoo ORM imports, credentials or provider clients live here. Each specialist
 uses only the enclosing run's bounded runtime and returns a strict handoff.
 """
 
-from .specialists import FilterAdapter, InterviewAdapter, ReportAdapter
+from .specialists import FilterAdapter, InterviewAdapter, ReportAdapter, ScheduleAdapter
 
 
 def filter_adapter():
@@ -13,6 +13,10 @@ def filter_adapter():
 
 def interview_adapter():
     return InterviewAdapter()
+
+
+def schedule_adapter():
+    return ScheduleAdapter()
 
 
 def report_adapter():

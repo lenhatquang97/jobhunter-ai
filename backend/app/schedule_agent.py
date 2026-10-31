@@ -34,7 +34,8 @@ class ScheduleContext(BaseModel):
     duration_minutes: int = Field(default=30, ge=5, le=240)
     timezone: str = Field(default="Asia/Ho_Chi_Minh", min_length=1, max_length=100)
     response_deadline: datetime
-    delivery_mode: Literal["dry_run", "mailpit", "smtp_test"] = "dry_run"
+    delivery_mode: Literal["dry_run", "mailpit", "smtp_test", "smtp_live_demo"] = "dry_run"
+    recipient_override: str | None = Field(default=None, max_length=320)
     interviewer_ref: str | None = None
     require_live_availability: bool = False
     prior_output_refs: list[str] = Field(default_factory=list, max_length=100)
@@ -162,7 +163,7 @@ def _deliver(invitation: dict) -> dict:
             delivery_ref = f"mailpit:{invitation['id']}"
         except (OSError, smtplib.SMTPException):
             return schedule_store.update(invitation["id"], state="delivery_failed")
-    else:
+    elif invitation["delivery_mode"] == "smtp_test":
         if os.environ.get("SCHEDULE_LIVE_EMAIL_ENABLED", "false").lower() != "true":
             return schedule_store.update(invitation["id"], state="delivery_failed")
         recipient = os.environ.get("SCHEDULE_TEST_RECIPIENT") or os.environ.get("RECRUITER_EMAIL")
@@ -185,6 +186,27 @@ def _deliver(invitation: dict) -> dict:
                 if refused:
                     return schedule_store.update(invitation["id"], state="delivery_failed")
             delivery_ref = f"smtp-test:{invitation['id']}"
+        except (OSError, smtplib.SMTPException, ValueError):
+            return schedule_store.update(invitation["id"], state="delivery_failed")
+    else:
+        if os.environ.get("SCHEDULE_LIVE_EMAIL_ENABLED", "false").lower() != "true":
+            return schedule_store.update(invitation["id"], state="delivery_failed")
+        required = ("SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "MAIL_FROM")
+        if not all(os.environ.get(key) for key in required):
+            return schedule_store.update(invitation["id"], state="delivery_failed")
+        message = EmailMessage()
+        message["From"] = os.environ["MAIL_FROM"]
+        message["To"] = invitation["candidate_email"]
+        message["Subject"] = f"[SCHEDULE DEMO] {subject}"
+        message.set_content(body)
+        try:
+            with smtplib.SMTP(os.environ["SMTP_HOST"], int(os.environ["SMTP_PORT"]), timeout=20) as smtp:
+                if os.environ.get("SMTP_STARTTLS", "true").lower() == "true":
+                    smtp.starttls()
+                smtp.login(os.environ["SMTP_USER"], os.environ["SMTP_PASSWORD"])
+                if smtp.send_message(message):
+                    return schedule_store.update(invitation["id"], state="delivery_failed")
+            delivery_ref = f"smtp-live-demo:{invitation['id']}"
         except (OSError, smtplib.SMTPException, ValueError):
             return schedule_store.update(invitation["id"], state="delivery_failed")
     return schedule_store.update(
@@ -213,6 +235,8 @@ def _validate(assignment: ScheduleAssignment) -> list[str]:
         errors.append("interviewer_ref is required for live availability checking.")
     if context.delivery_mode == "smtp_test" and not context.require_live_availability:
         errors.append("smtp_test requires a successful live availability check.")
+    if context.delivery_mode == "smtp_live_demo" and not context.recipient_override:
+        errors.append("recipient_override is required for a real demo email.")
     return errors
 
 
@@ -296,12 +320,17 @@ def run_schedule_assignment(assignment: ScheduleAssignment, provider: CandidateP
     try:
         for candidate_ref in assignment.context.candidate_refs:
             candidate = provider.get_candidate(candidate_ref)
+            candidate_email = (
+                assignment.context.recipient_override
+                if assignment.context.delivery_mode == "smtp_live_demo"
+                else candidate.candidate_email
+            )
             invitation, created = schedule_store.create_or_get(
                 request_ref=assignment.request_ref,
                 candidate_ref=candidate.candidate_ref,
                 job_ref=candidate.job_ref,
                 candidate_name=candidate.candidate_name,
-                candidate_email=candidate.candidate_email,
+                candidate_email=candidate_email,
                 job_title=candidate.job_title,
                 scheduled_for=assignment.context.scheduled_for,
                 duration_minutes=assignment.context.duration_minutes,

@@ -12,6 +12,7 @@ class TestCandidateWorkflow(TransactionCase):
         super().setUpClass()
         cls.company = cls.env['res.company'].create({'name': 'Workflow Synthetic Company'})
         cls.user = cls.env['res.users'].create({'name': 'Workflow Recruiter', 'login': 'workflow.recruiter',
+            'email': 'workflow.recruiter@example.invalid', 'tz': 'Asia/Ho_Chi_Minh',
             'company_id': cls.company.id, 'company_ids': [(6, 0, cls.company.ids)],
             'group_ids': [(6, 0, [cls.env.ref('hr_recruitment.group_hr_recruitment_user').id])]})
         cls.job = cls.env['hr.job'].create({'name': 'Workflow Engineer', 'company_id': cls.company.id,
@@ -53,6 +54,29 @@ class TestCandidateWorkflow(TransactionCase):
         other = self.user.copy({'login': 'workflow.other', 'name': 'Other'})
         with self.assertRaises(AccessError):
             case.with_user(other)._public()
+
+    def test_automation_schedules_dispatches_and_waits_for_candidate_response(self):
+        self.applicant.write({'interviewer_ids': [(6, 0, self.user.ids)]})
+        case = self.case()
+        case._automation_start(case.version)
+        case._auto_schedule(case.version)
+        self.assertEqual(case.automation_state, 'scheduling')
+        self.assertEqual(case.draft['status'], 'ready')
+        case._prepare(case.version, 'en', [
+            {'criterion_id': case.criteria[0]['id'], 'question': f'Question {i}?', 'follow_up': None}
+            for i in range(5)
+        ])
+        case._automation_dispatch(case.version)
+        session = case.session_ids
+        self.assertEqual(case.automation_state, 'awaiting_candidate')
+        self.assertEqual(session.status, 'prepared')
+        self.assertEqual(session._candidate_public()['current_question'], None)
+        session._respond('accepted')
+        self.assertEqual(case.automation_state, 'interview')
+        self.assertEqual(session.status, 'awaiting_answers')
+        self.assertTrue(session._candidate_public()['current_question'])
+        session._finish()
+        self.assertEqual(case.automation_state, 'reporting')
 
     def test_schedule_missing_dst_and_no_overlap(self):
         case = self.case()

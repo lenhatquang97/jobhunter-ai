@@ -167,13 +167,22 @@ class RunWorkflow(Base):
 
 class Store:
     def __init__(self, url, connect_args=None):
+        self.sqlite = url.startswith("sqlite+aiosqlite://")
+        engine_connect_args = dict(connect_args or {})
+        if self.sqlite:
+            # Event polling must not starve the terminal status writer in SQLite tests.
+            engine_connect_args.setdefault("timeout", 30)
         self.engine = create_async_engine(
-            url, echo=False, hide_parameters=True, connect_args=connect_args or {}
+            url, echo=False, hide_parameters=True, connect_args=engine_connect_args
         )
         self.session = async_sessionmaker(self.engine, expire_on_commit=False)
 
     async def initialize(self):
         async with self.engine.begin() as connection:
+            if self.sqlite:
+                # Allow short read polls to coexist with the run's terminal write.
+                await connection.execute(text("PRAGMA journal_mode=WAL"))
+                await connection.execute(text("PRAGMA busy_timeout=30000"))
             await connection.run_sync(Base.metadata.create_all)
 
     async def close(self):

@@ -33,12 +33,15 @@
           <div class="jh-workflow-toolbar">
             <label>Candidate <select aria-label="Focused candidate" t-att-value="this.state.focusId || ''" t-on-change="this.focusCandidate"><option value="">Choose a candidate</option><option t-foreach="this.state.candidateIds" t-as="candidateId" t-key="candidateId" t-att-value="candidateId" t-out="this.candidateLabel(candidateId)"/></select></label>
             <button t-att-disabled="!this.state.workflowCase || !!this.activeRun || this.state.sending || this.state.workflowBusy" t-on-click="() => this.runWorkflow('screen')">Review CV</button>
+            <button t-att-disabled="!this.state.workflowCase || !!this.activeRun || this.state.sending || this.state.workflowBusy" t-on-click="() => this.state.workflowOpen = !this.state.workflowOpen">Schedule interview</button>
             <button class="jh-prepare-direct" t-att-disabled="!this.state.workflowCase?.criteria_approved || !!this.activeRun || this.state.sending || this.state.workflowBusy" t-on-click="() => this.runWorkflow('prepare_interview')">Prepare interview</button>
             <button t-att-disabled="!this.state.workflowCase || !!this.activeRun || this.state.sending || this.state.workflowBusy" t-on-click="() => this.runWorkflow('report')">Summarize evidence</button>
+            <button class="jh-orchestrate" t-att-disabled="!this.state.workflowCase || !!this.activeRun || this.state.sending || this.state.workflowBusy" t-on-click="this.submitOrchestration">Run full workflow</button>
           </div>
           <p t-if="this.state.workflowBusy" role="status">Loading candidate workflow…</p>
           <div t-if="this.state.workflowCase" class="jh-workflow-body">
             <t t-set="caseData" t-value="this.state.workflowCase"/>
+            <div class="jh-workflow-status">Automation: <strong t-out="caseData.automation_state || 'idle'"/></div>
             <details t-if="!caseData.criteria_approved" open="open" class="jh-criteria-approval">
               <summary>Review role criteria</summary><p>Approve this version before reviewing the CV or preparing an interview.</p>
               <ul><li t-foreach="caseData.criteria" t-as="criterion" t-key="criterion.id" t-out="criterion.text"/></ul>

@@ -71,6 +71,9 @@ class CandidateInterview(http.Controller):
                 strict(arguments, ('question_id', 'client_answer_id', 'text'))
                 answer = session._answer(**arguments)
                 return {'answer': answer, 'session': session._candidate_public()}
+            if operation == 'respond':
+                strict(arguments, ('response',))
+                return {'session': session._respond(arguments['response'])}
             if operation == 'finish':
                 strict(arguments, ())
                 return {'session': session._finish()}

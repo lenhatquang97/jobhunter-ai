@@ -279,7 +279,26 @@ class WorkflowRunner:
             self.rid, "agent.completed", {"name": "Orchestrator"}, "Orchestrator"
         )
         action = self.body.workflow.action
-        if action in {"screen", "schedule", "confirm", "prepare_interview"} and not self.case.get(
+        if action == "orchestrate" and self.case.get("automation_state") in {
+            "awaiting_candidate", "interview", "declined", "ghosted", "reporting", "completed"
+        }:
+            key = self.active_sources[-1]["key"] if self.active_sources else None
+            message = f"This candidate workflow is already {self.case['automation_state']}; no duplicate reservation or invitation was created."
+            if key:
+                message += f" [{key}]"
+            await self.service.publish_answer(
+                self.rid, [message], self.active_sources, "Orchestrator"
+            )
+            return
+        if action == "orchestrate":
+            await self.tool(
+                "workflow_automation_start",
+                {"case_id": self.case["id"], "expected_version": self.case["version"]},
+                "Orchestrator",
+            )
+        if action in {
+            "screen", "schedule", "confirm", "prepare_interview"
+        } and not self.case.get(
             "criteria_approved"
         ):
             raise SafeError(
@@ -374,6 +393,89 @@ class WorkflowRunner:
                 {"case_id": self.case["id"], "expected_version": self.case["version"], **guide},
                 "Interview",
             )
+        elif action == "orchestrate":
+            documents = self.case.get("documents", [])
+            if not documents:
+                raise SafeError(
+                    "missing_cv",
+                    "Select an existing readable CV for this candidate.",
+                    needs_input=True,
+                )
+            for doc in documents[:3]:
+                await self.tool("read_document", {"attachment_id": doc["id"]}, "Orchestrator")
+
+            review = await self.role("Filter", Screening, "submit_screening")
+            criteria = {c["id"] for c in self.case["criteria"]}
+            if (
+                len(review["findings"]) != len(criteria)
+                or {f["criterion_id"] for f in review["findings"]} != criteria
+            ):
+                raise SafeError(
+                    "invalid_handoff", "The screening did not cover the approved criteria."
+                )
+            registry = {s["key"]: s["excerpt"] for s in self.active_sources}
+            for finding in review["findings"]:
+                if finding["status"] != "unknown" and not finding["citations"]:
+                    raise SafeError("invalid_citation", "A screening finding has no evidence.")
+                for cite in finding["citations"]:
+                    if (
+                        cite["source_key"] not in registry
+                        or cite["quote"] not in registry[cite["source_key"]]
+                    ):
+                        raise SafeError(
+                            "invalid_citation", "A screening quotation did not match its source."
+                        )
+            await self.save("screening", review, "Filter")
+
+            await self.service.event(
+                self.rid, "agent.started", {"name": "Schedule"}, "Schedule"
+            )
+            await self.tool(
+                "workflow_auto_schedule",
+                {"case_id": self.case["id"], "expected_version": self.case["version"]},
+                "Schedule",
+            )
+            await self.service.event(
+                self.rid, "agent.completed", {"name": "Schedule"}, "Schedule"
+            )
+            draft = self.case.get("schedule") or {}
+            if draft.get("status") != "ready":
+                missing = ", ".join(draft.get("missing", []) + draft.get("issues", []))
+                raise SafeError(
+                    "schedule_needs_input",
+                    "Automation paused at scheduling. Assign an interviewer and provide a candidate email, then retry: "
+                    + (missing or "the scheduling details")
+                    + ". The completed screening remains saved.",
+                    needs_input=True,
+                )
+
+            guide = await self.role("Interview", Guide, "submit_guide", "guide")
+            if any(q["criterion_id"] not in criteria for q in guide["questions"]):
+                raise SafeError(
+                    "invalid_handoff", "Interview questions must use approved criteria."
+                )
+            await self.tool(
+                "workflow_prepare",
+                {"case_id": self.case["id"], "expected_version": self.case["version"], **guide},
+                "Interview",
+            )
+            await self.tool(
+                "workflow_dispatch",
+                {"case_id": self.case["id"], "expected_version": self.case["version"]},
+                "Schedule",
+            )
+            await self.check()
+            key = self.active_sources[-1]["key"] if self.active_sources else None
+            message = "The CV evidence was reviewed, the earliest available interviewer slot was reserved, and one candidate invitation was queued. The workflow is now waiting for the candidate to accept or decline; no hiring stage or hiring decision was changed."
+            if key:
+                message += f" [{key}]"
+            await self.service.publish_answer(
+                self.rid,
+                [message],
+                self.active_sources,
+                "Orchestrator",
+            )
+            return
         elif action == "confirm":
             await self.tool(
                 "workflow_confirm",

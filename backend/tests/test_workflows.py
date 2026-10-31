@@ -105,6 +105,9 @@ class WorkflowBridge(Bridge):
                 "source_state": "current",
                 "version": 1,
             }
+        elif operation == "workflow_automation_start":
+            self.case["criteria_approved"] = True
+            self.case["automation_state"] = "filtering"
         elif operation == "workflow_schedule":
             self.case["schedule"] = {
                 "version": 1,
@@ -115,12 +118,36 @@ class WorkflowBridge(Bridge):
                 "guide_ready": False,
                 "booking": None,
             }
+        elif operation == "workflow_auto_schedule":
+            self.case["schedule"] = {
+                "version": 1,
+                "status": "ready",
+                "missing": [],
+                "issues": [],
+                "schedule": {},
+                "guide_ready": False,
+                "booking": None,
+            }
+        elif operation == "workflow_prepare":
+            self.case["schedule"]["guide_ready"] = True
+            self.case["interview"] = {
+                "state": "prepared",
+                "submitted_count": 0,
+                "questions": copy.deepcopy(args["questions"]),
+            }
         elif operation == "workflow_confirm":
             self.case["schedule"]["booking"] = {
                 "event_id": 50,
                 "session_id": 60,
                 "mail_status": "outgoing",
             }
+        elif operation == "workflow_dispatch":
+            self.case["schedule"]["booking"] = {
+                "event_id": 50,
+                "session_id": 60,
+                "mail_status": "queued",
+            }
+            self.case["automation_state"] = "awaiting_candidate"
         else:
             raise AssertionError(operation)
         self.case["version"] += 1
@@ -249,6 +276,50 @@ async def test_actual_schedule_needs_input_without_booking_or_interview(workflow
     assert final["run"]["status"] == "needs_input"
     assert [i[2] for i in provider.inputs] == ["Schedule"]
     assert "workflow_confirm" not in [c[0] for c in bridge.calls]
+
+
+async def test_orchestrator_reviews_schedules_dispatches_and_waits_for_candidate(workflow_client):
+    screening = {
+        "summary": "Candidate reports Python experience",
+        "findings": [
+            {
+                "criterion_id": "c1",
+                "status": "supported",
+                "finding": "Candidate reports Python use",
+                "citations": [{"source_key": "S2", "quote": "Built Python services."}],
+                "question": "What was your own contribution?",
+            }
+        ],
+    }
+    questions = [
+        {
+            "criterion_id": "c1",
+            "question": f"Describe Python example {index} and your own contribution.",
+            "follow_up": None,
+        }
+        for index in range(1, 6)
+    ]
+    provider = Provider(
+        [
+            handoff("submit_screening", screening),
+            handoff("submit_guide", {"language": "en", "questions": questions}),
+        ]
+    )
+    bridge = WorkflowBridge()
+    client, _ = await workflow_client(provider, bridge)
+    cid = await conversation(client)
+    response = await client.post(
+        f"/v1/conversations/{cid}/messages",
+        json=request("orchestrate"),
+    )
+    final = await terminal(client, response.json()["run_id"])
+
+    assert final["run"]["status"] == "completed", final
+    assert [item[2] for item in provider.inputs] == ["Filter", "Interview"]
+    assert [artifact["kind"] for artifact in bridge.artifacts] == ["screening"]
+    names = [call[0] for call in bridge.calls]
+    assert "workflow_prepare" in names
+    assert "workflow_dispatch" in names
 
 
 async def test_natural_routing_uses_actual_selected_context_and_shared_budget(workflow_client):

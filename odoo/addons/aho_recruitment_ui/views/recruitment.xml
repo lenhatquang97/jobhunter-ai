@@ -6,7 +6,9 @@
         <field name="arch" type="xml">
             <xpath expr="//t[@t-name='card']" position="replace">
                 <t t-name="card">
-                    <main class="aho-job-card">
+                    <!-- Keep the native card's immediate div wrapper so optional
+                         addons such as website_hr_recruitment can extend it. -->
+                    <div class="aho-job-card">
                         <div class="aho-job-heading">
                             <div class="aho-job-title"><field name="name"/></div>
                             <field name="is_favorite" widget="boolean_favorite" nolabel="1"/>
@@ -32,10 +34,12 @@
                             </button>
                         </div>
                         <div class="aho-job-actions">
-                            <button name="%(hr_recruitment.action_hr_job_applications)d" type="action" class="btn btn-primary">Tất cả ứng viên</button>
+                            <div name="large_screen_job_page_div" invisible="1">
+                                <button name="%(hr_recruitment.action_hr_job_applications)d" type="action" class="btn btn-primary">Tất cả ứng viên</button>
+                            </div>
                             <button type="open" class="btn btn-secondary">JD và yêu cầu</button>
                         </div>
-                    </main>
+                    </div>
                 </t>
             </xpath>
         </field>

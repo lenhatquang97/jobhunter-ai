@@ -357,6 +357,7 @@ export class JobhunterChat extends Component {
     async refreshWorkflow() {
         const ticket = this.workflowGeneration = (this.workflowGeneration || 0) + 1;
         const id = this.state.focusId;
+        let resumeReport = false;
         this.state.workflowCase = null;
         if (!id) return;
         this.state.workflowBusy = true;
@@ -364,10 +365,20 @@ export class JobhunterChat extends Component {
             const result = await this.call("workflow.get", {applicant_id: id});
             if (ticket !== this.workflowGeneration || this.destroyed || id !== this.state.focusId) return;
             this.state.workflowCase = result.case;
+            const resumeKey = `${result.case.id}:${result.case.version}`;
+            if (result.case.automation_state === "reporting" && !result.case.report && this.workflowResumeKey !== resumeKey) {
+                this.workflowResumeKey = resumeKey;
+                resumeReport = true;
+            }
             if (!this.state.candidateIds.includes(id)) this.state.candidateIds.push(id);
             if (!this.state.participants.length) this.state.participants = [{name: result.case.applicant_name, email: result.case.candidate_email || "", timezone: "", start: "", end: ""}];
         } catch (error) { if (ticket === this.workflowGeneration) this.showError(error); }
-        finally { if (ticket === this.workflowGeneration) this.state.workflowBusy = false; }
+        finally {
+            if (ticket === this.workflowGeneration) {
+                this.state.workflowBusy = false;
+                if (resumeReport) queueMicrotask(() => this.runWorkflow("report"));
+            }
+        }
     }
     candidateLabel(id) { return this.state.workflowCase?.applicant_id === id ? this.state.workflowCase.applicant_name : "Applicant #" + id; }
     criterionLabel(caseData, id) { return caseData?.criteria?.find((criterion) => criterion.id === id)?.text || id; }
@@ -383,7 +394,7 @@ export class JobhunterChat extends Component {
     }
     async runWorkflow(action, data = {}) {
         if (!this.state.focusId || this.activeRun || this.state.sending || this.state.workflowBusy) return;
-        this.state.draft = {screen: "Help me check this candidate CV against the approved Software Engineer requirements.", schedule: "Help me book an interview for this candidate.", prepare_interview: "Prepare five typed interview questions for this candidate using the approved criteria and CV evidence.", report: "Summarize the available CV findings and actually submitted interview answers, preserving incomplete evidence.", confirm: "Confirm booking & send the reviewed candidate invitation."}[action];
+        this.state.draft = {screen: "Help me check this candidate CV against the approved Software Engineer requirements.", schedule: "Prepare an unbooked interview scheduling proposal for this candidate.", orchestrate: "Start the candidate workflow: review CV evidence, reserve the earliest free assigned-interviewer slot, prepare interview questions, send one invitation, and wait for the candidate response.", prepare_interview: "Prepare five typed interview questions for this candidate using the approved criteria and CV evidence.", report: "Summarize the available CV findings and actually submitted interview answers, preserving incomplete evidence.", confirm: "Confirm booking & send the reviewed candidate invitation."}[action];
         if (action === "prepare_interview") { this.state.interviewUrl = ""; this.directRequest = null; }
         this.workflowRefreshedRun = null;
         await this.send(null, {action, applicant_id: this.state.focusId, data});
@@ -430,10 +441,14 @@ export class JobhunterChat extends Component {
     updateParticipant(index, field, event) { this.state.participants[index][field] = event.target.value; }
     addParticipant() { if (this.state.participants.length < 10) this.state.participants.push({name: "", email: "", timezone: "", start: "", end: ""}); }
     removeParticipant(index) { this.state.participants.splice(index, 1); }
-    async submitSchedule() {
+    schedulePayload() {
         const participants = this.state.participants.map(p => ({name: p.name, email: p.email, timezone: p.timezone, user_id: null, availability: p.start && p.end ? [{start: p.start, end: p.end}] : []}));
-        await this.runWorkflow("schedule", {schedule: {start: this.state.scheduleStart || null, timezone: this.state.scheduleZone || null, duration_minutes: this.state.scheduleDuration ? Number(this.state.scheduleDuration) : null, participant_count: participants.length || null, participants, candidate_email: this.state.workflowCase?.candidate_email || null}});
+        return {start: this.state.scheduleStart || null, timezone: this.state.scheduleZone || null, duration_minutes: this.state.scheduleDuration ? Number(this.state.scheduleDuration) : null, participant_count: participants.length || null, participants, candidate_email: this.state.workflowCase?.candidate_email || null};
     }
+    async submitSchedule() {
+        await this.runWorkflow("schedule", {schedule: this.schedulePayload()});
+    }
+    async submitOrchestration() { await this.runWorkflow("orchestrate"); }
     async confirmBooking() {
         const draft = this.state.workflowCase?.schedule;
         if (draft?.status === "ready" && draft.guide_ready && !draft.booking) await this.runWorkflow("confirm", {draft_version: draft.version});

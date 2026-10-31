@@ -3,6 +3,7 @@ import hmac
 import html
 import logging
 import os
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Literal
@@ -174,6 +175,123 @@ def schedule_demo_candidates(limit: int = 3):
         return {'candidate_refs': SeaPostgresScheduleProvider().list_demo_candidate_refs(limit)}
     except ScheduleProviderError as exc:
         raise HTTPException(502, str(exc)) from exc
+
+
+@app.get('/api/agents/schedule/candidates', dependencies=[Depends(recruiter)])
+def schedule_candidates(limit: int = 20):
+    """Recruiter-only candidate/job/interviewer choices for the standalone demo."""
+    try:
+        return {'candidates': SeaPostgresScheduleProvider().list_schedule_candidates(limit)}
+    except ScheduleProviderError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+@app.get('/api/agents/schedule/auto-plan/{candidate_ref}', dependencies=[Depends(recruiter)])
+def schedule_auto_plan(candidate_ref: str):
+    """Propose the earliest shared internal-calendar slot; this endpoint never sends mail."""
+    try:
+        return SeaPostgresScheduleProvider().find_earliest_internal_slot(candidate_ref)
+    except ScheduleProviderError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.get('/api/agents/schedule/jobs', dependencies=[Depends(recruiter)])
+def schedule_jobs(limit: int = 20):
+    """Return open jobs with assigned interviewers and available candidates."""
+    try:
+        return {'jobs': SeaPostgresScheduleProvider().list_schedule_jobs(limit)}
+    except ScheduleProviderError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+class JobSchedulePlanRequest(BaseModel):
+    job_ref: str
+    candidate_refs: list[str]
+
+
+@app.post('/api/agents/schedule/job-plan', dependencies=[Depends(recruiter)])
+def schedule_job_plan(body: JobSchedulePlanRequest):
+    """Propose distinct shared slots for selected candidates; never sends mail."""
+    try:
+        return SeaPostgresScheduleProvider().plan_job_slots(body.job_ref, body.candidate_refs)
+    except ScheduleProviderError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+class JobScheduleConfirmRequest(BaseModel):
+    request_ref: str
+    job_ref: str
+    proposals: list[dict]
+    recipient_overrides: dict[str, str]
+
+
+@app.post('/api/agents/schedule/job-confirm', dependencies=[Depends(recruiter)])
+def schedule_job_confirm(body: JobScheduleConfirmRequest):
+    """Send exactly one explicitly confirmed SMTP demo invitation per proposal."""
+    provider = SeaPostgresScheduleProvider()
+    results = []
+    for index, proposal in enumerate(body.proposals):
+        candidate_ref = str(proposal.get('candidate', {}).get('candidate_ref', ''))
+        recipient = body.recipient_overrides.get(candidate_ref, '').strip()
+        if not candidate_ref or '@' not in recipient:
+            raise HTTPException(422, f'a real demo recipient is required for candidate {candidate_ref or index + 1}')
+        assignment = schedule_agent.ScheduleAssignment.model_validate({
+            'request_ref': f'{body.request_ref}:{index + 1}', 'agent': 'Schedule',
+            'requested_outcome': 'invite_phone_screen', 'harness_version': 'v1.0',
+            'context': {
+                'candidate_refs': [candidate_ref], 'authorized_for_scheduling': True,
+                'scheduled_for': proposal['scheduled_for'],
+                'duration_minutes': proposal['duration_minutes'],
+                'timezone': 'Asia/Ho_Chi_Minh',
+                'response_deadline': proposal['response_deadline'],
+                'delivery_mode': 'smtp_live_demo', 'recipient_override': recipient,
+                'require_live_availability': False, 'prior_output_refs': [],
+            },
+        })
+        results.append(schedule_agent.run_schedule_assignment(assignment, provider).model_dump(mode='json'))
+    return {'job_ref': body.job_ref, 'results': results}
+
+
+@app.post('/api/agents/schedule/job-demo-run/{job_ref}', dependencies=[Depends(recruiter)])
+def schedule_job_demo_run(job_ref: str):
+    """One-click judge demo: plan two candidates and send two real test-inbox emails."""
+    recipient = (os.environ.get('SCHEDULE_TEST_RECIPIENT') or os.environ.get('SMTP_USER') or '').strip()
+    if '@' not in recipient:
+        raise HTTPException(422, 'Configure SCHEDULE_TEST_RECIPIENT or SMTP_USER first.')
+    provider = SeaPostgresScheduleProvider()
+    try:
+        jobs = {item['job_ref']: item for item in provider.list_schedule_jobs(50)}
+        job = jobs.get(job_ref)
+        if not job:
+            raise ScheduleProviderError(f'job {job_ref} was not found')
+        candidate_refs = [item['candidate_ref'] for item in job['candidates'][:2]]
+        if len(candidate_refs) < 2:
+            raise ScheduleProviderError('the judge demo requires at least two candidates')
+        plan = provider.plan_job_slots(job_ref, candidate_refs)
+    except ScheduleProviderError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    request_ref = f'judge-demo-{job_ref}-{int(datetime.now().timestamp())}'
+    results = []
+    for index, proposal in enumerate(plan['proposals']):
+        assignment = schedule_agent.ScheduleAssignment.model_validate({
+            'request_ref': f'{request_ref}:{index + 1}', 'agent': 'Schedule',
+            'requested_outcome': 'invite_phone_screen', 'harness_version': 'v1.0',
+            'context': {
+                'candidate_refs': [proposal['candidate']['candidate_ref']],
+                'authorized_for_scheduling': True,
+                'scheduled_for': proposal['scheduled_for'],
+                'duration_minutes': proposal['duration_minutes'],
+                'timezone': plan['timezone'],
+                'response_deadline': proposal['response_deadline'],
+                'delivery_mode': 'smtp_live_demo', 'recipient_override': recipient,
+                'require_live_availability': False, 'prior_output_refs': [],
+            },
+        })
+        results.append(schedule_agent.run_schedule_assignment(assignment, provider).model_dump(mode='json'))
+    return {
+        'request_ref': request_ref, 'plan': plan, 'results': results,
+        'delivery_target': 'configured test inbox',
+    }
 
 
 @app.get('/api/agents/schedule/google/connect/{interviewer_ref}', dependencies=[Depends(recruiter)])

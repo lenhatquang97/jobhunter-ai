@@ -22,6 +22,8 @@ services:
       JOBHUNTER_API_URL: http://api:8000
       JOBHUNTER_BRIDGE_SECRET: ${JOBHUNTER_BRIDGE_SECRET:-panel-local-bridge-only}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-${JOBHUNTER_OPENAI_API_KEY:-}}
+      JOBHUNTER_TEST_CAPTURE: ${JOBHUNTER_TEST_CAPTURE:-1}
+      JOBHUNTER_PUBLIC_URL: ${JOBHUNTER_PUBLIC_URL:-http://localhost:8069}
     ports: ['127.0.0.1:${JOBHUNTER_ODOO_PORT:-8069}:8069']
     volumes:
       - ./odoo/addons/t10_jobhunter_chat:/mnt/extra-addons/t10_jobhunter_chat:ro
@@ -55,7 +57,7 @@ services:
       JOBHUNTER_OPENAI_API_KEY: ${JOBHUNTER_OPENAI_API_KEY:-${OPENAI_API_KEY:-}}
       JOBHUNTER_MODEL: ${JOBHUNTER_MODEL:-gpt-6.1-sol}
       JOBHUNTER_REASONING_EFFORT: ${JOBHUNTER_REASONING_EFFORT:-low}
-      JOBHUNTER_AGENT_ADAPTERS: '{"Filter":"app.agents:filter_adapter","Interview":"app.agents:interview_adapter","Report":"app.agents:report_adapter"}'
+      JOBHUNTER_AGENT_ADAPTERS: '{"Filter":"app.agents:filter_adapter","Schedule":"app.agents:schedule_adapter","Interview":"app.agents:interview_adapter","Report":"app.agents:report_adapter"}'
     volumes:
       - ./backend/app:/app/backend/app:ro
 volumes:

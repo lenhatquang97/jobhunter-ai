@@ -61,7 +61,7 @@ export function RecruiterScreening() {
   return <div className="app-shell">
     <header className="topbar">
       <div><span className="eyebrow">Jobhunter AI</span><h1>Interview workspace</h1></div>
-      <nav><a className="active" href="/">AI screening</a><a href="/copilot">Human interview assistant</a></nav>
+      <nav><a className="active" href="/">AI screening</a><a href="/schedule">Schedule</a><a href="/copilot">Human interview assistant</a></nav>
     </header>
     <main className="dashboard">
       <section className="panel intro-panel">

@@ -51,7 +51,7 @@ services:
       JOBHUNTER_DATABASE_URL: postgresql+asyncpg://jobhunter:${JOBHUNTER_LOCAL_DB_PASSWORD:-panel-local-only}@backend-db:5432/jobhunter
       JOBHUNTER_BRIDGE_SECRET: ${JOBHUNTER_BRIDGE_SECRET:-panel-local-bridge-only}
       JOBHUNTER_ODOO_BASE_URL: http://odoo:8069
-      JOBHUNTER_OPENAI_API_KEY: ${JOBHUNTER_OPENAI_API_KEY:-}
+      JOBHUNTER_OPENAI_API_KEY: ${JOBHUNTER_OPENAI_API_KEY:-${OPENAI_API_KEY:-}}
       JOBHUNTER_MODEL: ${JOBHUNTER_MODEL:-gpt-6.1-sol}
       JOBHUNTER_REASONING_EFFORT: ${JOBHUNTER_REASONING_EFFORT:-low}
       JOBHUNTER_AGENT_ADAPTERS: '{"Filter":"app.agents:filter_adapter","Interview":"app.agents:interview_adapter","Report":"app.agents:report_adapter"}'

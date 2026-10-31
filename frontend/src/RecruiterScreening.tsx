@@ -28,7 +28,8 @@ export function RecruiterScreening() {
   const create = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const form = new FormData(event.currentTarget);
+      const formElement = event.currentTarget;
+      const form = new FormData(formElement);
       const companyContext = String(form.get("company_background") || "").trim();
       const jobDescription = String(form.get("job_description") || "").trim();
       const cv = form.get("cv");
@@ -39,7 +40,7 @@ export function RecruiterScreening() {
       form.set("max_topics", "7");
       form.set("max_probes", "1");
       await api<Session>("/api/interviews", { method: "POST", body: form, recruiterToken: token });
-      event.currentTarget.reset(); await load();
+      formElement.reset(); await load();
     } catch (reason) { setError(String(reason)); } finally { setBusy(false); }
   };
 

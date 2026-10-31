@@ -2,7 +2,7 @@
 
 React/Vite + FastAPI workspace containing two interview modes:
 
-- AI screening: guided first-round questions with typed answers or optional English voice. Transcripts stay editable until the candidate explicitly submits them.
+- AI screening: guided first-round questions with English/Vietnamese typed answers or optional English voice. Drafts survive a refresh and stay editable until the candidate explicitly submits them. Recruiter notes use rubric findings tied to stable submitted-answer IDs, without scores or automated recommendations.
 - Human interview assistant: a prerecorded WAV is played as background audio and streamed in real time to AssemblyAI. AssemblyAI emits partial/final speaker-labelled turns and translates each final turn to Vietnamese through its LLM Gateway; GPT creates private follow-up suggestions and evidence-first feedback.
 
 The assistant does not make hiring decisions or assign suitability scores. The WAV is only a deterministic demo source: transcript text is produced from the live AssemblyAI WebSocket stream, not replayed from a prepared transcript cache.

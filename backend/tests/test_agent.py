@@ -59,3 +59,31 @@ def test_realtime_secret_never_exposes_api_key():
     with patch.object(agent, '_post', return_value={'value': 'ephemeral'} ) as post:
         assert agent.realtime_secret('gpt-realtime', 'marin', 'gpt-4o-transcribe') == 'ephemeral'
         assert post.call_args.args[2] == 'OPENAI_API_KEY'
+
+
+def test_report_keeps_only_submitted_answer_evidence_and_fills_unknown_criteria():
+    model = {
+        'summary': 'Candidate described recent work.',
+        'strengths': [],
+        'gaps': [],
+        'cv_claims': ['The candidate self-reported Python work.'],
+        'findings': [
+            {'criterion_id': 'current-role', 'status': 'supported', 'statement': 'Role described.',
+             'evidence_turn_ids': ['answer-1']},
+            {'criterion_id': 'motivation', 'status': 'supported', 'statement': 'No valid evidence.',
+             'evidence_turn_ids': ['made-up']},
+        ],
+    }
+    transcript = [{'id': 'answer-1', 'question': 'What do you do?', 'answer': 'I build APIs.'}]
+    with patch.object(agent, 'chat', return_value=model):
+        result = agent.report('report', {'job': 'Dev', 'company': 'Acme'}, {'cv': 'CV'}, transcript, '')
+    findings = {item['criterion_id']: item for item in result['findings']}
+    assert findings['current-role']['evidence_turn_ids'] == ['answer-1']
+    assert findings['motivation']['status'] == 'unknown'
+    assert findings['availability']['status'] == 'unknown'
+
+
+def test_screening_prompt_does_not_infer_scripted_or_ai_generated_answers():
+    prompt = agent.turn_system('Dev', 'Acme', 'state')
+    assert 'scripted_answer' not in prompt
+    assert 'Do not infer whether an answer was written by AI' in prompt

@@ -1,21 +1,25 @@
 import React from "react";
 import { api, useRecruiterToken } from "./api";
 
+type Finding = { criterion_id: string; status: string; statement: string; evidence_turn_ids: string[] };
+type Report = { summary?: string; strengths?: string[]; gaps?: string[]; cv_claims?: string[]; findings?: Finding[] };
+type SubmittedTurn = { id: string; question: string; answer: string; language?: string; submitted_at?: string; topic?: string };
 type Session = {
   id: number; candidate: string; job: string; company: string; state: string;
-  created_at: string; url: string; error?: string; report?: Record<string, unknown>;
+  created_at: string; url: string; error?: string; flags?: string[]; report?: Report; turns?: SubmittedTurn[];
 };
 
 export function RecruiterScreening() {
   const [token, setToken] = useRecruiterToken();
   const [sessions, setSessions] = React.useState<Session[]>([]);
+  const [selected, setSelected] = React.useState<Session | null>(null);
   const [error, setError] = React.useState("");
   const [busy, setBusy] = React.useState(false);
 
   const load = React.useCallback(async () => {
     if (!token) return;
     try { setSessions(await api<Session[]>("/api/interviews", { recruiterToken: token })); setError(""); }
-    catch (err) { setError(String(err)); }
+    catch (reason) { setError(String(reason)); }
   }, [token]);
 
   React.useEffect(() => { void load(); }, [load]);
@@ -26,7 +30,21 @@ export function RecruiterScreening() {
       const form = new FormData(event.currentTarget);
       await api<Session>("/api/interviews", { method: "POST", body: form, recruiterToken: token });
       event.currentTarget.reset(); await load();
-    } catch (err) { setError(String(err)); } finally { setBusy(false); }
+    } catch (reason) { setError(String(reason)); } finally { setBusy(false); }
+  };
+
+  const review = async (id: number) => {
+    setBusy(true); setError("");
+    try { setSelected(await api<Session>(`/api/interviews/${id}`, { recruiterToken: token })); }
+    catch (reason) { setError(String(reason)); } finally { setBusy(false); }
+  };
+
+  const retryReport = async (id: number) => {
+    setBusy(true); setError("");
+    try {
+      await api(`/api/interviews/${id}/retry-report`, { method: "POST", recruiterToken: token });
+      await load(); await review(id);
+    } catch (reason) { setError(String(reason)); } finally { setBusy(false); }
   };
 
   return <div className="app-shell">
@@ -38,7 +56,7 @@ export function RecruiterScreening() {
       <section className="panel intro-panel">
         <p className="eyebrow">Round 1</p><h2>Create a guided AI screening</h2>
         <p className="muted">The candidate reviews every typed or transcribed answer before submitting it. Final notes preserve evidence and gaps; they do not make a hiring decision.</p>
-        <label>Recruiter access token<input type="password" value={token} onChange={(e) => setToken(e.target.value)} placeholder="RECRUITER_TOKEN" /></label>
+        <label>Recruiter access token<input type="password" value={token} onChange={(event) => setToken(event.target.value)} placeholder="RECRUITER_TOKEN" /></label>
         {error && <p className="error" role="alert">{error}</p>}
       </section>
       <form className="panel form-grid" onSubmit={create}>
@@ -50,7 +68,7 @@ export function RecruiterScreening() {
         <label className="wide">CV (PDF/TXT)<input name="cv" type="file" accept=".pdf,.txt" /></label>
         <label className="wide">Or paste CV text<textarea name="cv_plain" minLength={20} /></label>
         <div className="row wide"><label>Topics<input name="max_topics" type="number" min="1" max="12" defaultValue="7" /></label><label>Follow-ups per topic<input name="max_probes" type="number" min="0" max="6" defaultValue="1" /></label></div>
-        <button className="primary wide" disabled={busy || !token}>{busy ? "Creating…" : "Create interview link"}</button>
+        <button className="primary wide" disabled={busy || !token}>{busy ? "Working…" : "Create interview link"}</button>
       </form>
       <section className="panel sessions">
         <div className="section-title"><div><p className="eyebrow">Sessions</p><h2>Candidate interviews</h2></div><button onClick={() => void load()}>Refresh</button></div>
@@ -58,9 +76,27 @@ export function RecruiterScreening() {
         {sessions.map((session) => <article className="session" key={session.id}>
           <div><strong>{session.candidate}</strong><p>{session.job} · {session.company}</p></div>
           <span className={`status ${session.state}`}>{session.state}</span>
-          <a href={session.url} target="_blank" rel="noreferrer">Open candidate link ↗</a>
+          <div className="session-actions"><button onClick={() => void review(session.id)}>Review</button><a href={session.url} target="_blank" rel="noreferrer">Candidate link ↗</a></div>
         </article>)}
       </section>
+
+      {selected && <section className="panel screening-review">
+        <div className="section-title">
+          <div><p className="eyebrow">Evidence review · human decision required</p><h2>{selected.candidate}</h2><p className="muted">{selected.job} · {selected.state}</p></div>
+          <button onClick={() => setSelected(null)}>Close</button>
+        </div>
+        {selected.error && <p className="error">{selected.error}</p>}
+        {(selected.state === "done" || selected.state === "error") && <button onClick={() => void retryReport(selected.id)} disabled={busy}>Retry report</button>}
+        <div className="review-columns">
+          <div><h3>Submitted transcript</h3>{!selected.turns?.length && <p className="muted">No submitted answers.</p>}
+            {selected.turns?.map((turn) => <article className="review-turn" key={turn.id}><small>{turn.id} · {(turn.language || "en").toUpperCase()}</small><strong>{turn.question}</strong><p>{turn.answer}</p></article>)}
+          </div>
+          <div><h3>AI evidence draft</h3>{!selected.report && <p className="muted">Report is not available yet. Refresh after the interview finishes.</p>}
+            {selected.report?.summary && <p>{selected.report.summary}</p>}
+            <div className="review-findings">{selected.report?.findings?.map((finding) => <article key={finding.criterion_id}><span className={`status ${finding.status}`}>{finding.status}</span><strong>{finding.criterion_id}</strong><p>{finding.statement}</p><small>{finding.evidence_turn_ids.join(", ") || "No candidate evidence"}</small></article>)}</div>
+          </div>
+        </div>
+      </section>}
     </main>
   </div>;
 }

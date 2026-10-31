@@ -47,7 +47,9 @@ def create(**vals):
     with _conn() as c:
         cur = c.execute(f"INSERT INTO interview ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
                         [json.dumps(vals[k]) if k in JSON_COLS else vals[k] for k in cols])
-        return get(cur.lastrowid)
+        session_id = cur.lastrowid
+        c.commit()
+    return get(session_id)
 
 def update(id_, **vals):
     with _conn() as c:

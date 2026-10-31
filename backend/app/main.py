@@ -4,6 +4,7 @@ import logging
 import os
 from io import BytesIO
 from pathlib import Path
+from typing import Literal
 
 import httpx
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
@@ -157,7 +158,9 @@ def guarded(s, fn):
 def candidate_page(token: str):
     s = store.by_token(token)
     return {'open': bool(s) and s['state'] in ('ready', 'running'),
-            'job': s and s['job'], 'company': s and s['company']}
+            'job': s and s['job'], 'company': s and s['company'],
+            'state': s and s['state'], 'pending': s and s['pending'],
+            'turns': (s and s['turns']) or [], 'audio_consent': bool(s and s['consent_at'])}
 
 class VoiceConsent(BaseModel):
     consent: bool = False
@@ -196,6 +199,7 @@ def start(token: str):
 
 class Answer(BaseModel):
     text: str = ''
+    language: Literal['en', 'vi'] = 'en'
 
 @app.post('/api/i/{token}/answer')
 def answer(token: str, body: Answer, tasks: BackgroundTasks):
@@ -207,14 +211,16 @@ def answer(token: str, body: Answer, tasks: BackgroundTasks):
             return {'error': 'closed'}
         asked = s['pending']
         res = agent.next_turn(turn_cfg(), ctx(s), s['idx'], s['turns'], asked, text)
-        turns = s['turns'] + [dict(asked, answer=text, evidence=res['evidence'],
-                                   flags=res['flags'])]
+        turn_id = f"answer-{len(s['turns']) + 1}"
+        submitted_turn = dict(asked, id=turn_id, answer=text, language=body.language,
+                              submitted_at=store.now(), evidence=res['evidence'], flags=res['flags'])
+        turns = s['turns'] + [submitted_turn]
         flags = sorted(set(s['flags']) | set(res['flags']))
         store.update(s['id'], turns=turns, flags=flags, pending=pending(res),
                      state='done' if res['done'] else 'running')
         if res['done']:
             tasks.add_task(write_report, s['id'])
-        return {'question': res['question'], 'done': res['done']}
+        return {'question': res['question'], 'done': res['done'], 'submitted_turn': submitted_turn}
     return guarded(session(token), fn)
 
 

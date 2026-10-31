@@ -46,3 +46,33 @@ No live recruiting records were created or changed by these checks. Provider,
 SMTP and booking behavior outside this scope was not reverified. Private fixture
 logs/evidence are ignored under .state. Production rollout evidence is kept there
 separately; this document describes checks completed before publication.
+
+
+## Verified production rollout
+
+The guarded source release 31ff686 was pushed to main and deployed as ECS task
+definition jobhunter:5, image digest
+`sha256:8c9b5c86a29274be8240d299929a046d528bac7ec8349de6ea947d29d1cb8ca6`.
+The reviewed full stop plan changed only the app task/service. All service tasks
+were fully stopped before the explicit upgrade-ui task ran; it exited zero and
+logged its completion marker. The reviewed restart plan changed only service
+count to one. A subsequent complete Terraform plan reported no changes.
+
+The service has desired/running one and pending zero, a HEALTHY task, and a healthy
+ALB target. ECS Exec under the application user confirmed the running API retains
+JOBHUNTER_REASONING_EFFORT=high. Public native login/CSRF/cookie/management-boundary
+and WebSocket upgrade/pong checks passed. Read-only saved-history/recruiter-
+isolation checks passed with the same three existing assistant responses and
+current sources.
+
+Authenticated read checks confirmed the upgraded CV view and proposal model,
+private empty proposal listing for the synthetic history, rejection of missing
+CSRF and inaccessible proposal confirmation, and served confirmation JavaScript,
+proposal styles and the preserved search-border fix. No successful job-creation
+or fresh model-generation request was made in production. Business-write and
+concurrency proof remains the separately labeled disposable synthetic evidence.
+
+Disposable local API/container/network resources were removed. The initializer,
+provider configuration, production roles, SMTP/cron settings, database and
+filestore were not re-provisioned. The small sidebar-only PR6 merge was preserved;
+its legacy-menu reference does not install or enable a legacy RAG addon.

@@ -84,7 +84,10 @@ container command override `["install-ui"]`. This maintenance command uses only
 the existing Odoo database owner and runtime secret; it does not run the retired
 initializer, seed data, start cron or send mail. Require exit code zero before
 applying the reviewed service-only plan with `desired_count=1`. Subsequent UI
-model/view upgrades require an explicit module upgrade maintenance operation.
+model/view upgrades use the same reviewed stop/upgrade/start sequence with the
+app task command override `["upgrade-ui"]`, which updates only
+`t10_jobhunter_chat,aho_recruitment_ui` using the existing restricted database
+owner. Never rerun the retired initializer.
 
 Private deployment sessions remain in `.state/aws-session.json` mode 0600.
 A temporary bootstrap-user key may be used solely to assume the existing scoped

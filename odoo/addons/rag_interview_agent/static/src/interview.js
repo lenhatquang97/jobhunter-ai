@@ -13,11 +13,10 @@
     };
     const status = (text, mode = '') => { $('status').textContent = text; $('orb').className = 'orb ' + mode; };
 
-    let pc, dc, answer = '', speaking = false, finished = false, busy = false, speechTimer;
-    const submitAfterPause = () => { clearTimeout(speechTimer); speechTimer = setTimeout(submit, 3500); };
+    let pc, dc, answer = '', speaking = false, candidateSpeaking = false, listening = false, finished = false, busy = false;
 
     const say = (text) => new Promise((resolve) => {
-        speaking = true; status('Speaking...', 'talk');
+        speaking = true; listening = false; candidateSpeaking = false; status('Speaking...', 'talk');
         $('question').textContent = text;
         say.done = resolve;
         // Out-of-band, empty input: the voice sees only this text, never the candidate's audio, so it cannot drift
@@ -35,7 +34,8 @@ ${text}`,
 
     const listen = () => {
         answer = ''; $('heard').textContent = '';
-        status('Your turn, I am listening...', 'listen');
+        listening = true; candidateSpeaking = false;
+        status('Your turn, I am listening. Press “I\'m done” when you finish.', 'listen');
         $('done').disabled = false;
     };
 
@@ -56,6 +56,7 @@ ${text}`,
         if (busy || speaking || finished || !text) return;
         busy = true; $('done').disabled = true;
         status('Thinking...');
+        listening = false; candidateSpeaking = false;
         try { await handle(await rpc('answer', {text})); } finally { busy = false; }
     };
     $('done').addEventListener('click', submit);
@@ -63,11 +64,13 @@ ${text}`,
     const onEvent = (e) => {
         const ev = JSON.parse(e.data);
         if (ev.type === 'output_audio_buffer.stopped' || ev.type === 'output_audio_buffer.cleared') spoke();
-        else if (ev.type === 'conversation.item.input_audio_transcription.completed' && !speaking && !busy && !finished) {
-            // server VAD closed a speech segment; one answer can span several segments, so pause-to-send is ours
+        else if (ev.type === 'input_audio_buffer.speech_started' && listening && !speaking && !busy && !finished) {
+            candidateSpeaking = true;
+        } else if (ev.type === 'conversation.item.input_audio_transcription.completed' && candidateSpeaking && listening && !speaking && !busy && !finished) {
+            // Only render speech explicitly detected from the candidate microphone.
             answer += (ev.transcript || '') + ' ';
             $('heard').textContent = answer.trim();
-            submitAfterPause();
+            candidateSpeaking = false;
         } else if (ev.type === 'error') console.warn('realtime', ev.error);
     };
 

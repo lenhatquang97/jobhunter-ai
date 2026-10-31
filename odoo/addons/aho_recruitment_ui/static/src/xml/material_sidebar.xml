@@ -10,7 +10,7 @@
         <xpath expr="//div[hasclass('o_menu_systray')]" position="before">
             <t t-if="this.currentApp?.xmlid === 'hr_recruitment.menu_hr_recruitment_root'">
                 <t t-set="jobMenu" t-value="this.findAhoMenu('hr_recruitment.menu_hr_job_position') || this.findAhoMenu('hr_recruitment.menu_hr_job_position_interviewer')"/>
-                <t t-set="setupMenus" t-value="['hr_recruitment.menu_hr_department', 'aho_recruitment_ui.menu_pipeline_setup', 'hr_recruitment.menu_hr_applicant_refuse_reason', 'aho_recruitment_ui.menu_company_ai_context', 'hr_recruitment.menu_hr_recruitment_global_settings'].map((x) => this.findAhoMenu(x))"/>
+                <t t-set="setupMenus" t-value="['hr_recruitment.menu_hr_department', 'aho_recruitment_ui.menu_pipeline_setup', 'hr_recruitment.menu_hr_applicant_refuse_reason', 'hr_recruitment.menu_hr_recruitment_global_settings'].map((x) => this.findAhoMenu(x))"/>
                 <div class="aho-sidebar-brand">
                     <a t-att-href="jobMenu ? this.getMenuItemHref(jobMenu) : '/odoo'" class="aho-brand-link" aria-label="AI Hiring Operator">
                         <img src="/aho_recruitment_ui/static/src/img/ai-hiring-operator.svg?v=3" alt="" width="28" height="28"/>
@@ -26,6 +26,7 @@
                 <nav class="aho-sidebar-menu" aria-label="Điều hướng tuyển dụng">
                     <div class="aho-sidebar-group">
                         <div class="aho-sidebar-section-label">Tuyển dụng</div>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="this.findAhoMenu('t10_jobhunter_chat.menu_chat_workspace')" label="'Jobhunter Chat'" icon="'chat'"/>
                         <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="jobMenu" label="'Vị trí tuyển dụng'" icon="'work'"/>
                         <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="this.findAhoMenu('aho_recruitment_ui.menu_applicant_tracking')" label="'Ứng viên'" icon="'groups'"/>
                     </div>
@@ -34,9 +35,7 @@
                         <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[0]" label="'Phòng ban'" icon="'business'"/>
                         <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[1]" label="'Quy trình tuyển dụng'" icon="'view_kanban'"/>
                         <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[2]" label="'Lý do từ chối'" icon="'block'"/>
-                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[3]" label="'Thông tin công ty cho AI'" icon="'business'"
-                           hint="'Sứ mệnh, sản phẩm, văn hoá. Agent phỏng vấn đọc nội dung này cùng JD và CV.'"/>
-                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[4]" label="'Cài đặt'" icon="'tune'"/>
+                        <t t-call="aho_recruitment_ui.MaterialSidebarEntry" menu="setupMenus[3]" label="'Cài đặt'" icon="'tune'"/>
                     </div>
                 </nav>
             </t>

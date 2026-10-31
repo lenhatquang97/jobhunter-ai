@@ -29,8 +29,7 @@ class HrJob(models.Model):
     @api.depends('no_of_recruitment', 'aho_target_date', 'description', 'recruiter_id',
                  'application_ids', 'application_ids.active', 'application_ids.stage_id',
                  'application_ids.stage_id.hired_stage', 'application_ids.stage_id.rotting_threshold_days',
-                 'application_ids.date_last_stage_update', 'application_ids.create_date',
-                 'application_ids.rag_interview_ids.state')
+                 'application_ids.date_last_stage_update', 'application_ids.create_date')
     def _compute_aho_status(self):
         Applicant = self.env['hr.applicant']
         now = fields.Datetime.now()
@@ -84,10 +83,8 @@ class HrJob(models.Model):
             last_new = max(applicants.mapped('create_date'), default=False)
             if remaining and (not last_new or last_new < now - timedelta(days=QUIET_DAYS)):
                 flag(f'Không có hồ sơ mới trong {QUIET_DAYS} ngày', 'watch')
-            if 'error' in applicants.mapped('rag_interview_ids.state'):
-                flag('Có phiên phỏng vấn tự động bị lỗi', 'watch')
             if not html2plaintext(job.description or '').strip():
-                flag('Chưa có JD, phỏng vấn tự động thiếu căn cứ đặt câu hỏi', 'watch')
+                flag('Chưa có JD để đối chiếu bằng chứng', 'watch')
             if not job.recruiter_id:
                 flag('Chưa có HR phụ trách', 'watch')
             if not target and not applicants:

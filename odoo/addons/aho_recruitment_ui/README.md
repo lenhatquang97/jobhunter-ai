@@ -1,3 +1,10 @@
+> Production compatibility — 2026-10-31: this repository now installs the UI with
+> `t10_jobhunter_chat` and native Recruitment only. Legacy RAG interview/filter
+> dependencies, voice/report views, score fields and company RAG settings are
+> excluded from the loaded addon. The current sidebar keeps Jobhunter Chat
+> accessible; applicant guidance uses native record state only. The historical
+> handoff below describes the original imported UI, not the production workflow.
+
 # Recruitment UI — bàn giao cho team
 
 Module `aho_recruitment_ui` cung cấp giao diện sáng cho Odoo Recruitment: hai nhóm điều hướng, sidebar thu gọn, card tuyển dụng, card/list ứng viên và lịch sử phỏng vấn AI trong hồ sơ. Baseline main: `f444ec8`. Bản đồng bộ token/component theo kit Figma đã được kiểm tra lại trên Odoo ngày 31/10/2026; xem phạm vi runtime bên dưới.

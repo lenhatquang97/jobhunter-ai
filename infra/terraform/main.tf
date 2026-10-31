@@ -417,6 +417,7 @@ locals {
 }
 
 resource "aws_ecs_task_definition" "app" {
+  skip_destroy = true
 
   family                   = "jobhunter"
   requires_compatibilities = ["FARGATE"]

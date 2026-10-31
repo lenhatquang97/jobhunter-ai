@@ -259,7 +259,21 @@ http {
     sys.exit(1)
 
 
-if sys.argv[1:] == ["init"]:
+def install_ui():
+    # Maintenance only: use the existing restricted Odoo database owner.
+    # Never reinitialize the database, seed records, or start cron/SMTP.
+    path = write_config()
+    subprocess.run(
+        ["odoo", "--config", str(path), "--init", "aho_recruitment_ui",
+         "--stop-after-init", "--workers", "0", "--no-http"],
+        check=True,
+    )
+    print("Recruitment UI installed; legacy RAG addons remain excluded.")
+
+
+if sys.argv[1:] == ["install-ui"]:
+    install_ui()
+elif sys.argv[1:] == ["init"]:
     initialize()
 else:
     serve()

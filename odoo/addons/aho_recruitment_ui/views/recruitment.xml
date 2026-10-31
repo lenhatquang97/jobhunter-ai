@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <odoo>
     <record id="recruitment_cards" model="ir.ui.view">
         <field name="name">hr.job.aho.cards</field><field name="model">hr.job</field>
@@ -27,8 +27,7 @@
                         </div>
                         <div class="aho-job-footer">
                             <div class="aho-job-owner" t-if="record.recruiter_id?.raw_value"><field name="recruiter_id" widget="many2one_avatar_employee" options="{'display_avatar_name': True}"/></div>
-                            <button t-if="record.activity_count?.raw_value" name="action_open_activities" type="object" class="btn btn-link aho-job-todo" groups="hr_recruitment.group_hr_recruitment_interviewer"
-                                    title="Các việc đã lên lịch trên hồ sơ ứng viên của vị trí này">
+                            <button t-if="record.activity_count?.raw_value" name="action_open_activities" type="object" class="btn btn-link aho-job-todo" groups="hr_recruitment.group_hr_recruitment_interviewer" title="Các việc đã lên lịch trên hồ sơ ứng viên của vị trí này">
                                 <i class="oi" data-icon="schedule" aria-hidden="true"/> <field name="activity_count"/> việc cần xử lý
                             </button>
                         </div>
@@ -75,30 +74,6 @@
         <field name="act_window_id" ref="hr_recruitment.action_hr_job_applications"/>
     </record>
     <!-- Company background the interview agent reads (res.company.rag_background). Opens the current company. -->
-    <record id="action_company_ai_context" model="ir.actions.server">
-        <field name="name">Thông tin công ty cho AI</field>
-        <field name="model_id" ref="base.model_res_company"/>
-        <field name="state">code</field>
-        <field name="code">action = {'type': 'ir.actions.act_window', 'name': 'Thông tin công ty cho AI', 'res_model': 'res.company', 'res_id': env.company.id, 'view_mode': 'form', 'views': [(env.ref('aho_recruitment_ui.company_ai_context_form').id, 'form')], 'target': 'current'}</field>
-    </record>
-    <record id="company_ai_context_form" model="ir.ui.view">
-        <field name="name">res.company.aho.ai.context</field>
-        <field name="model">res.company</field>
-        <field name="priority">99</field>
-        <field name="arch" type="xml">
-            <form string="Thông tin công ty cho AI" create="0" delete="0">
-                <sheet>
-                    <h1><field name="name" readonly="1"/></h1>
-                    <p class="text-muted">Agent phỏng vấn đọc nội dung này cùng JD, yêu cầu của vị trí và CV ứng viên để đặt câu hỏi và viết báo cáo.</p>
-                    <field name="rag_background" nolabel="1" placeholder="Sứ mệnh, sản phẩm, văn hoá, cách làm việc, đội ngũ..."/>
-                </sheet>
-            </form>
-        </field>
-    </record>
-    <menuitem id="menu_company_ai_context" name="Thông tin công ty cho AI" parent="hr_recruitment.menu_hr_recruitment_configuration"
-              action="action_company_ai_context" sequence="2" groups="base.group_erp_manager"/>
-
     <!-- Core "Stages" menu is debug-only; expose the same action to recruitment managers. -->
-    <menuitem id="menu_pipeline_setup" name="Quy trình tuyển dụng" parent="hr_recruitment.menu_hr_recruitment_config_jobs"
-              action="hr_recruitment.hr_recruitment_stage_act" sequence="1" groups="hr_recruitment.group_hr_recruitment_manager"/>
+    <menuitem id="menu_pipeline_setup" name="Quy trình tuyển dụng" parent="hr_recruitment.menu_hr_recruitment_config_jobs" action="hr_recruitment.hr_recruitment_stage_act" sequence="1" groups="hr_recruitment.group_hr_recruitment_manager"/>
 </odoo>

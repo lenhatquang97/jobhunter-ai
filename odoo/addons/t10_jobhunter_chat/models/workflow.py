@@ -119,7 +119,7 @@ class CandidateCase(models.Model):
     direct_guide_version = fields.Integer(default=0, required=True)
     automation_state = fields.Selection([
         ('idle', 'Idle'), ('filtering', 'Filtering'), ('scheduling', 'Scheduling'),
-        ('awaiting_candidate', 'Awaiting candidate'), ('interview', 'Interview'),
+        ('review', 'Awaiting recruiter confirmation'), ('awaiting_candidate', 'Awaiting candidate'), ('interview', 'Interview'),
         ('declined', 'Declined'), ('ghosted', 'Ghosted'), ('reporting', 'Reporting'),
         ('completed', 'Completed'), ('failed', 'Failed'),
     ], default='idle', required=True, index=True)
@@ -220,81 +220,16 @@ class CandidateCase(models.Model):
         return self._public()
 
     def _automation_start(self, expected_version):
-        """Treat starting an explicit candidate workflow as approval of the current JD snapshot."""
-        self._lock()
-        self._refresh()
-        if type(expected_version) is not int or expected_version != self.version or not self.criteria:
-            raise ValidationError('Refresh the candidate and provide a nonempty JD before starting automation.')
-        values = {'automation_state': 'filtering', 'automation_error': False, 'version': self.version + 1}
+        self._expected(expected_version)
         if not self.criteria_approved:
-            values['criteria_approved'] = True
-        self._mutate(values)
+            raise ValidationError('Review and approve the current criteria before starting the workflow.')
+        if self.draft and self.draft.get('booking'):
+            raise ValidationError('This case already has a booking.')
+        self._mutate({'automation_state': 'filtering', 'automation_error': False, 'version': self.version + 1})
         return self._public()
 
     def _auto_schedule(self, expected_version):
-        """Find the earliest free 30-minute slot for explicitly assigned interviewers."""
-        self._expected(expected_version)
-        applicant = self._access()
-        interviewers = applicant.interviewer_ids or self.job_id.interviewer_ids
-        if not interviewers:
-            raise ValidationError('Assign at least one interviewer to the candidate or job.')
-        if not applicant.email_from:
-            raise ValidationError('The candidate needs an email address before scheduling.')
-        zone_name = self.owner_id.tz or self.company_id.partner_id.tz or 'UTC'
-        zone = ZoneInfo(zone_name)
-        now_local = fields.Datetime.now().replace(tzinfo=timezone.utc).astimezone(zone)
-        duration = 30
-        chosen = None
-        for day_offset in range(1, 15):
-            day = (now_local + timedelta(days=day_offset)).date()
-            if day.weekday() >= 5:
-                continue
-            for hour in range(9, 17):
-                for minute in (0, 30):
-                    start_local = datetime.combine(day, datetime.min.time()).replace(
-                        hour=hour, minute=minute, tzinfo=zone
-                    )
-                    start_utc = start_local.astimezone(timezone.utc)
-                    end_utc = start_utc + timedelta(minutes=duration)
-                    if all(self._calendar({
-                        'user_id': user.id, 'email': user.email or '',
-                    }, start_utc, end_utc) for user in interviewers):
-                        chosen = (start_local, end_utc.astimezone(zone))
-                        break
-                if chosen:
-                    break
-            if chosen:
-                break
-        if not chosen:
-            raise ValidationError('No shared interviewer availability was found in the next 14 days.')
-        start_local, end_local = chosen
-        if any(not user.email for user in interviewers):
-            raise ValidationError('Every assigned interviewer needs an email address.')
-        local_start = start_local.replace(tzinfo=None).isoformat(timespec='minutes')
-        local_end = end_local.replace(tzinfo=None).isoformat(timespec='minutes')
-        participants = [{
-            'name': applicant.partner_name or 'Candidate', 'email': applicant.email_from,
-            'timezone': zone_name, 'availability': [{'start': local_start, 'end': local_end}],
-            'user_id': None,
-        }]
-        participants.extend({
-            'name': user.name, 'email': user.email, 'timezone': user.tz or zone_name,
-            'availability': [], 'user_id': user.id,
-        } for user in interviewers)
-        schedule = {
-            'start': local_start, 'timezone': zone_name, 'duration_minutes': duration,
-            'participant_count': len(participants), 'participants': participants,
-            'candidate_email': applicant.email_from,
-        }
-        draft = validate_schedule(schedule, self._calendar)
-        if draft['status'] != 'ready':
-            raise ValidationError('; '.join(draft['issues'] or draft['missing']))
-        draft['version'] = ((self.draft or {}).get('version') or 0) + 1
-        self._mutate({
-            'draft': draft, 'guide': {}, 'automation_state': 'scheduling',
-            'version': self.version + 1,
-        })
-        return self._public()
+        raise AccessError('Provide explicit scheduling details for a recruiter-reviewed preview.')
 
     def _prepare_direct(self, expected_version, language, questions):
         self._expected(expected_version)
@@ -382,7 +317,7 @@ class CandidateCase(models.Model):
         merged = {**((self.draft or {}).get('schedule') or {}), **{key: value for key, value in schedule.items() if value is not None}}
         draft = validate_schedule(merged, self._calendar)
         draft['version'] = ((self.draft or {}).get('version') or 0) + 1
-        self._mutate({'draft': draft, 'guide': {}, 'version': self.version + 1})
+        self._mutate({'draft': draft, 'guide': {}, 'automation_state': 'scheduling' if self.automation_state in ('filtering', 'scheduling', 'review') else self.automation_state, 'version': self.version + 1})
         return self._public()
 
     def _prepare(self, expected_version, language, questions):
@@ -401,8 +336,8 @@ class CandidateCase(models.Model):
             if question['follow_up'] is not None and (not isinstance(question['follow_up'], str) or not question['follow_up'].strip() or len(question['follow_up']) > 2000):
                 raise ValidationError('Provide at most one follow-up per question.')
         bounded(questions)
-        draft = {**self.draft, 'guide_ready': True}
-        self._mutate({'draft': draft, 'guide': {'language': language, 'questions': questions, 'draft_version': draft['version'],
+        draft = {**self.draft, 'guide_ready': True, 'version': self.draft['version'] + 1}
+        self._mutate({'draft': draft, 'automation_state': 'review' if self.automation_state in ('filtering', 'scheduling', 'review') else self.automation_state, 'guide': {'language': language, 'questions': questions, 'draft_version': draft['version'],
                                               'criteria_version': self.criteria_version, 'fingerprint': self.source_fingerprint},
                       'version': self.version + 1})
         return self._public()
@@ -517,27 +452,23 @@ class CandidateCase(models.Model):
             return self._confirm_atomic(draft_version, approval)
 
     def _automation_dispatch(self, expected_version):
-        self._expected(expected_version)
-        if self.automation_state != 'scheduling' or not self.draft or self.draft.get('status') != 'ready' or not self.draft.get('guide_ready'):
-            raise ValidationError('The automatic schedule and interview guide must be ready before dispatch.')
-        with self.env.cr.savepoint():
-            return self._confirm_atomic(self.draft['version'], None, automatic=True)
+        raise AccessError('An explicit browser confirmation capability is required.')
 
-    def _confirm_atomic(self, draft_version, approval, automatic=False):
+    def _confirm_atomic(self, draft_version, approval):
         self._lock()
         self._refresh()
-        if not automatic:
-            if not approval or approval._name != 'jobhunter.chat.approval' or approval.case_id != self or approval.owner_id.id != self.env.uid:
-                raise AccessError('An explicit browser confirmation capability is required.')
-            approval.check_access('read')
-            if type(draft_version) is not int or draft_version != approval.draft_version:
-                raise ValidationError('Confirmation does not match the approved draft version.')
+        if not approval or approval._name != 'jobhunter.chat.approval' or approval.case_id != self or approval.owner_id.id != self.env.uid:
+            raise AccessError('An explicit browser confirmation capability is required.')
+        approval.check_access('read')
+        if type(draft_version) is not int or draft_version != approval.draft_version:
+            raise ValidationError('Confirmation does not match the approved draft version.')
+        await_response = self.automation_state == 'review'
         committed = self._booking_for_draft(draft_version)
         if committed:
             if approval and not approval.session_id:
                 approval._mutate({'session_id': committed.id})
             return self._public()
-        approval_valid = automatic or (
+        approval_valid = (
             approval.draft_version == draft_version
             and approval.draft_hash == digest({'draft': self.draft, 'guide': self.guide, 'source': self.source_fingerprint})
         )
@@ -557,12 +488,12 @@ class CandidateCase(models.Model):
         session = self.env['jobhunter.chat.session']._insert({'case_id': self.id, 'owner_id': self.owner_id.id, 'company_id': self.company_id.id,
             'token_hash': hashlib.sha256(token.encode()).hexdigest(), 'expires_at': fields.Datetime.now() + timedelta(days=7),
             'questions': questions, 'language': self.guide['language'], 'fingerprint': self.source_fingerprint,
-            'dependencies': self.source_snapshot, 'status': 'prepared' if automatic else 'awaiting_answers', 'draft_version': draft_version})
+            'dependencies': self.source_snapshot, 'status': 'prepared' if await_response else 'awaiting_answers', 'draft_version': draft_version})
         # Suppress core calendar invitations; exactly one candidate invitation is queued below.
         event = self.env['calendar.event'].with_context(dont_notify=True, no_mail_to_attendees=True, mail_create_nosubscribe=True,
             mail_create_nolog=True, mail_notrack=True).create({'name': 'Interview: ' + self.applicant_id.partner_name,
                 'start': datetime.fromisoformat(checked['starts_at_utc'].replace('Z', '')), 'stop': datetime.fromisoformat(checked['ends_at_utc'].replace('Z', '')),
-                'user_id': self.env.uid, 'partner_ids': [(6, 0, self.env['res.users'].browse([p['user_id'] for p in self.draft['schedule']['participants'] if p['user_id']]).mapped('partner_id').ids)], 'description': 'Jobhunter interview reservation awaiting candidate response.' if automatic else 'Confirmed Jobhunter typed interview reservation.'})
+                'user_id': self.env.uid, 'partner_ids': [(6, 0, self.env['res.users'].browse([p['user_id'] for p in self.draft['schedule']['participants'] if p['user_id']]).mapped('partner_id').ids)], 'description': 'Jobhunter interview reservation awaiting candidate response.' if await_response else 'Confirmed Jobhunter typed interview reservation.'})
         link = base + '/jobhunter/interview/' + token
         mail = self.env['mail.mail'].with_context(mail_create_nosubscribe=True, _jobhunter_workflow=_INTERNAL).create({
             'jobhunter_workflow_session_id': session.id,
@@ -578,7 +509,7 @@ class CandidateCase(models.Model):
         draft = {**self.draft, 'booking': {'event_id': event.id, 'session_id': session.id, 'mail_status': 'queued'}}
         self._mutate({
             'draft': draft,
-            'automation_state': 'awaiting_candidate' if automatic else 'interview',
+            'automation_state': 'awaiting_candidate' if await_response else 'interview',
             'version': self.version + 1,
         })
         return self._public()
@@ -798,6 +729,8 @@ class InterviewSession(models.Model):
     def _finish(self):
         self.case_id._lock()
         self._valid()
+        if self.status not in ('awaiting_answers', 'in_progress', 'completed', 'partial'):
+            raise ValidationError('Accept the invitation before finishing this interview.')
         if self.status not in ('completed', 'partial'):
             self._mutate({'status': 'completed' if len(self.answer_ids) == len(self.questions) else 'partial'})
             self.case_id._mutate({'automation_state': 'reporting', 'version': self.case_id.version + 1})

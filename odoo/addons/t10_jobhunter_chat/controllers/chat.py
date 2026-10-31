@@ -237,7 +237,7 @@ class JobhunterChat(http.Controller):
                     if workflow['action'] == 'confirm':
                         strict(workflow['data'], ('draft_version',))
                         positive(workflow['data']['draft_version'])
-                    elif workflow['action'] == 'schedule':
+                    elif workflow['action'] in ('schedule', 'orchestrate'):
                         if set(workflow['data']) - {'schedule'}:
                             raise ValidationError('Invalid schedule request fields.')
                         if 'schedule' in workflow['data']:

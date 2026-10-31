@@ -366,7 +366,7 @@ export class JobhunterChat extends Component {
             if (ticket !== this.workflowGeneration || this.destroyed || id !== this.state.focusId) return;
             this.state.workflowCase = result.case;
             const resumeKey = `${result.case.id}:${result.case.version}`;
-            if (result.case.automation_state === "reporting" && !result.case.report && this.workflowResumeKey !== resumeKey) {
+            if (result.case.automation_state === "reporting" && this.workflowResumeKey !== resumeKey) {
                 this.workflowResumeKey = resumeKey;
                 resumeReport = true;
             }
@@ -394,7 +394,7 @@ export class JobhunterChat extends Component {
     }
     async runWorkflow(action, data = {}) {
         if (!this.state.focusId || this.activeRun || this.state.sending || this.state.workflowBusy) return;
-        this.state.draft = {screen: "Help me check this candidate CV against the approved Software Engineer requirements.", schedule: "Prepare an unbooked interview scheduling proposal for this candidate.", orchestrate: "Start the candidate workflow: review CV evidence, reserve the earliest free assigned-interviewer slot, prepare interview questions, send one invitation, and wait for the candidate response.", prepare_interview: "Prepare five typed interview questions for this candidate using the approved criteria and CV evidence.", report: "Summarize the available CV findings and actually submitted interview answers, preserving incomplete evidence.", confirm: "Confirm booking & send the reviewed candidate invitation."}[action];
+        this.state.draft = {screen: "Help me check this candidate CV against the approved Software Engineer requirements.", schedule: "Prepare an unbooked interview scheduling proposal for this candidate.", orchestrate: "Review CV evidence and prepare a scheduling preview and interview questions for my review. Do not book or send an invitation before explicit confirmation.", prepare_interview: "Prepare five typed interview questions for this candidate using the approved criteria and CV evidence.", report: "Summarize the available CV findings and actually submitted interview answers, preserving incomplete evidence.", confirm: "Confirm booking & send the reviewed candidate invitation."}[action];
         if (action === "prepare_interview") { this.state.interviewUrl = ""; this.directRequest = null; }
         this.workflowRefreshedRun = null;
         await this.send(null, {action, applicant_id: this.state.focusId, data});
@@ -448,7 +448,7 @@ export class JobhunterChat extends Component {
     async submitSchedule() {
         await this.runWorkflow("schedule", {schedule: this.schedulePayload()});
     }
-    async submitOrchestration() { await this.runWorkflow("orchestrate"); }
+    async submitOrchestration() { await this.runWorkflow("orchestrate", {schedule: this.schedulePayload()}); }
     async confirmBooking() {
         const draft = this.state.workflowCase?.schedule;
         if (draft?.status === "ready" && draft.guide_ready && !draft.booking) await this.runWorkflow("confirm", {draft_version: draft.version});

@@ -55,28 +55,48 @@ class TestCandidateWorkflow(TransactionCase):
         with self.assertRaises(AccessError):
             case.with_user(other)._public()
 
-    def test_automation_schedules_dispatches_and_waits_for_candidate_response(self):
-        self.applicant.write({'interviewer_ids': [(6, 0, self.user.ids)]})
+    def test_full_workflow_requires_criteria_approval(self):
         case = self.case()
+        with self.assertRaises(ValidationError):
+            case._automation_start(case.version)
+        self.assertFalse(case.criteria_approved)
+
+    def test_full_workflow_preview_requires_browser_confirmation(self):
+        case = self.ready()
+        questions = case.guide['questions']
         case._automation_start(case.version)
-        case._auto_schedule(case.version)
-        self.assertEqual(case.automation_state, 'scheduling')
-        self.assertEqual(case.draft['status'], 'ready')
+        case._schedule(case.version, case.draft['schedule'])
+        case._prepare(case.version, 'en', questions)
+        self.assertEqual(case.automation_state, 'review')
+        # A prepared full-flow preview cannot dispatch without browser approval.
+        with self.assertRaises(AccessError):
+            case._automation_dispatch(case.version)
+        self.assertFalse(case.session_ids)
+        self.assertNotIn('workflow_dispatch', self.bridge._grant_tools('execution'))
+        self.assertNotIn('workflow_auto_schedule', self.bridge._grant_tools('execution'))
+        with self.assertRaises(AccessError):
+            case._confirm(case.draft['version'], None)
+        approval = case._approval(case.draft['version'], str(uuid4()), str(uuid4()))
+        first = case._confirm(case.draft['version'], approval)
+        second = case._confirm(case.draft['version'], approval)
+        self.assertEqual(first['schedule']['booking'], second['schedule']['booking'])
+        self.assertEqual(len(case.session_ids), 1)
+        self.assertEqual(case.session_ids.status, 'prepared')
+        with self.assertRaises(ValidationError):
+            case.session_ids._finish()
+        self.assertEqual(case.session_ids.status, 'prepared')
+        case.session_ids._respond('accepted')
+        self.assertEqual(case.session_ids.status, 'awaiting_answers')
+
+    def test_changed_interview_guide_invalidates_reviewed_draft_version(self):
+        case = self.ready()
+        reviewed_version = case.draft['version']
         case._prepare(case.version, 'en', [
-            {'criterion_id': case.criteria[0]['id'], 'question': f'Question {i}?', 'follow_up': None}
+            {'criterion_id': case.criteria[0]['id'], 'question': f'Revised question {i}?', 'follow_up': None}
             for i in range(5)
         ])
-        case._automation_dispatch(case.version)
-        session = case.session_ids
-        self.assertEqual(case.automation_state, 'awaiting_candidate')
-        self.assertEqual(session.status, 'prepared')
-        self.assertEqual(session._candidate_public()['current_question'], None)
-        session._respond('accepted')
-        self.assertEqual(case.automation_state, 'interview')
-        self.assertEqual(session.status, 'awaiting_answers')
-        self.assertTrue(session._candidate_public()['current_question'])
-        session._finish()
-        self.assertEqual(case.automation_state, 'reporting')
+        with self.assertRaises(ValidationError):
+            case._approval(reviewed_version, str(uuid4()), str(uuid4()))
 
     def test_schedule_missing_dst_and_no_overlap(self):
         case = self.case()

@@ -4,8 +4,8 @@
     'description': 'Light recruitment navigation, applicant tracking, stage counts and explicit rule-based warnings.',
     'category': 'Human Resources/Recruitment',
     'summary': 'Light recruitment workspace, collapsible navigation, cards and candidate history',
-    'depends': ['hr_recruitment', 't10_jobhunter_chat', 'rag_interview_agent', 'rag_filter_agent'],
-    'data': ['views/applicant.xml', 'views/interview.xml', 'views/recruitment.xml'],
+    'depends': ['hr_recruitment_skills', 't10_jobhunter_chat'],
+    'data': ['views/applicant.xml', 'views/recruitment.xml', 'views/skills.xml'],
     'assets': {
         'web.assets_backend': [
             'aho_recruitment_ui/static/src/js/material_sidebar.js',

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Preserve declared skills; automated matching is outside this workspace. -->
+    <record id="applicant_skills_evidence_list" model="ir.ui.view">
+        <field name="name">hr.applicant.skills.evidence.list</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment_skills.crm_case_tree_view_job"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <field name="matching_score" position="attributes"><attribute name="column_invisible">True</attribute></field>
+            <field name="matching_skill_ids" position="attributes"><attribute name="column_invisible">True</attribute></field>
+            <field name="missing_skill_ids" position="attributes"><attribute name="column_invisible">True</attribute></field>
+        </field>
+    </record>
+    <record id="applicant_skills_evidence_form" model="ir.ui.view">
+        <field name="name">hr.applicant.skills.evidence.form</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment_skills.hr_applicant_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[widget[@name='gauge_chart']]" position="attributes"><attribute name="invisible">True</attribute></xpath>
+            <xpath expr="//page[.//field[@name='current_applicant_skill_ids']]" position="inside"><p class="text-muted">Declared skills and levels are profile evidence, not an AI assessment or hiring recommendation.</p></xpath>
+        </field>
+    </record>
+    <record id="applicant_skills_evidence_search" model="ir.ui.view">
+        <field name="name">hr.applicant.skills.evidence.search</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment_skills.hr_applicant_view_search_bis"/>
+        <field name="arch" type="xml"><filter name="matching_score" position="attributes"><attribute name="invisible">True</attribute></filter></field>
+    </record>
+    <record id="job_skills_evidence_list" model="ir.ui.view">
+        <field name="name">hr.job.skills.evidence.list</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment_skills.hr_job_list_inherit_hr_recruitment_skills"/>
+        <field name="arch" type="xml"><field name="applicant_matching_score" position="attributes"><attribute name="column_invisible">True</attribute></field>
+<field name="matching_applicant_skill_ids" position="attributes"><attribute name="column_invisible">True</attribute></field>
+<field name="missing_applicant_skill_ids" position="attributes"><attribute name="column_invisible">True</attribute></field></field>
+    </record>
+    <record id="job_skills_evidence_form" model="ir.ui.view">
+        <field name="name">hr.job.skills.evidence.form</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment_skills.view_hr_job_form"/>
+        <field name="arch" type="xml"><button name="action_job_add_applicants" position="attributes"><attribute name="invisible">True</attribute></button></field>
+    </record>
+    <record id="job_skills_evidence_menu" model="ir.ui.view">
+        <field name="name">hr.job.skills.evidence.menu</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment_skills.view_hr_job_kanban"/>
+        <field name="arch" type="xml"><xpath expr="//div[@name='menu_view_matching_applicants']" position="attributes"><attribute name="invisible">True</attribute></xpath></field>
+    </record>
+</odoo>

@@ -1,5 +1,9 @@
 # Synthetic provider responses, real specialist adapters + Odoo/PostgreSQL.
 services:
+  odoo:
+    environment:
+      JOBHUNTER_TEST_CAPTURE: "1"
+      JOBHUNTER_PUBLIC_URL: http://localhost:8069
   api:
     build:
       context: .

@@ -273,11 +273,25 @@ def install_ui(upgrade=False):
     print("Recruitment UI maintenance completed; legacy RAG addons remain excluded.")
 
 
+def seed_demo(mode):
+    path = write_config()
+    env = dict(os.environ, JOBHUNTER_DEMO_MODE=mode)
+    source = "import sys; sys.path.insert(0, '/opt/infra'); exec(open('/opt/infra/seed_demo.py').read())"
+    subprocess.run(
+        ["odoo", "shell", "--config", str(path), "--no-http", "--workers", "0"],
+        input=source, text=True, env=env, check=True,
+    )
+
+
 if sys.argv[1:] == ["upgrade-ui"]:
     install_ui(upgrade=True)
 elif sys.argv[1:] == ["install-ui"]:
     install_ui()
 elif sys.argv[1:] == ["init"]:
     initialize()
+elif sys.argv[1:] == ["seed-demo", "--dry-run"]:
+    seed_demo("dry-run")
+elif sys.argv[1:] == ["seed-demo", "--apply"]:
+    seed_demo("apply")
 else:
     serve()

@@ -278,7 +278,7 @@ async def test_actual_schedule_needs_input_without_booking_or_interview(workflow
     assert "workflow_confirm" not in [c[0] for c in bridge.calls]
 
 
-async def test_orchestrator_reviews_schedules_dispatches_and_waits_for_candidate(workflow_client):
+async def test_orchestrator_pauses_for_schedule_without_dispatch(workflow_client):
     screening = {
         "summary": "Candidate reports Python experience",
         "findings": [
@@ -291,18 +291,10 @@ async def test_orchestrator_reviews_schedules_dispatches_and_waits_for_candidate
             }
         ],
     }
-    questions = [
-        {
-            "criterion_id": "c1",
-            "question": f"Describe Python example {index} and your own contribution.",
-            "follow_up": None,
-        }
-        for index in range(1, 6)
-    ]
     provider = Provider(
         [
             handoff("submit_screening", screening),
-            handoff("submit_guide", {"language": "en", "questions": questions}),
+            handoff("submit_schedule", {}),
         ]
     )
     bridge = WorkflowBridge()
@@ -314,12 +306,14 @@ async def test_orchestrator_reviews_schedules_dispatches_and_waits_for_candidate
     )
     final = await terminal(client, response.json()["run_id"])
 
-    assert final["run"]["status"] == "completed", final
-    assert [item[2] for item in provider.inputs] == ["Filter", "Interview"]
+    assert final["run"]["status"] == "needs_input", final
+    assert [item[2] for item in provider.inputs] == ["Filter", "Schedule"]
     assert [artifact["kind"] for artifact in bridge.artifacts] == ["screening"]
     names = [call[0] for call in bridge.calls]
-    assert "workflow_prepare" in names
-    assert "workflow_dispatch" in names
+    assert "workflow_prepare" not in names
+    assert "workflow_dispatch" not in names
+    assert "workflow_confirm" not in names
+    assert bridge.case["schedule"]["booking"] is None
 
 
 async def test_natural_routing_uses_actual_selected_context_and_shared_budget(workflow_client):
@@ -628,3 +622,36 @@ async def test_sources_revoked_during_specialist_stream_block_final_delivery(wor
     result = await terminal(client, response.json()["run_id"])
     assert result["run"]["status"] == "needs_input"
     assert not [event for event in result["events"] if event["type"] == "message.completed"]
+
+
+async def test_full_workflow_cannot_approve_criteria(workflow_client):
+    bridge = WorkflowBridge(approved=False)
+    client, _ = await workflow_client(Provider([]), bridge)
+    cid = await conversation(client)
+    response = await client.post(f"/v1/conversations/{cid}/messages", json=request("orchestrate"))
+    final = await terminal(client, response.json()["run_id"])
+    assert final["run"]["status"] == "needs_input"
+    assert final["run"]["error"]["code"] == "criteria_approval_required"
+    assert bridge.case["criteria_approved"] is False
+    assert "workflow_automation_start" not in [call[0] for call in bridge.calls]
+
+
+async def test_full_workflow_accepts_explicit_schedule_fields(workflow_client):
+    client, _ = await workflow_client(Provider([]), WorkflowBridge(approved=False))
+    cid = await conversation(client)
+    response = await client.post(f"/v1/conversations/{cid}/messages", json=request("orchestrate", schedule={"timezone": "Asia/Ho_Chi_Minh"}))
+    assert response.status_code == 200
+    final = await terminal(client, response.json()["run_id"])
+    assert final["run"]["error"]["code"] == "criteria_approval_required"
+
+
+async def test_explicit_schedule_preserves_nullable_calendar_users(workflow_client):
+    bridge = WorkflowBridge()
+    client, _ = await workflow_client(Provider([handoff('submit_schedule', {})]), bridge)
+    cid = await conversation(client)
+    participant = {'name': 'Synthetic attendee', 'email': 'attendee@example.invalid', 'timezone': 'UTC', 'availability': [], 'user_id': None}
+    response = await client.post(f'/v1/conversations/{cid}/messages', json=request('schedule', schedule={'participants': [participant]}))
+    await terminal(client, response.json()['run_id'])
+    sent = next(call[1]['arguments']['schedule'] for call in bridge.calls if call[0] == 'workflow_schedule')
+    assert 'user_id' in sent['participants'][0]
+    assert sent['participants'][0]['user_id'] is None

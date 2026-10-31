@@ -23,19 +23,16 @@ services:
       JOBHUNTER_PUBLIC_URL: ${JOBHUNTER_PUBLIC_URL:-}
       JOBHUNTER_BRIDGE_SECRET: ${JOBHUNTER_BRIDGE_SECRET:-panel-local-bridge-only}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-${JOBHUNTER_OPENAI_API_KEY:-}}
-      JOBHUNTER_TEST_CAPTURE: ${JOBHUNTER_TEST_CAPTURE:-1}
-      JOBHUNTER_PUBLIC_URL: ${JOBHUNTER_PUBLIC_URL:-http://localhost:8069}
+      JOBHUNTER_TEST_CAPTURE: ${JOBHUNTER_TEST_CAPTURE:-0}
     ports: ['127.0.0.1:${JOBHUNTER_ODOO_PORT:-8069}:8069']
     volumes:
       - ./odoo/addons/t10_jobhunter_chat:/mnt/extra-addons/t10_jobhunter_chat:ro
-      - ./odoo/addons/rag_filter_agent:/mnt/extra-addons/rag_filter_agent:ro
-      - ./odoo/addons/rag_interview_agent:/mnt/extra-addons/rag_interview_agent:ro
       - ./odoo/addons/aho_recruitment_ui:/mnt/extra-addons/aho_recruitment_ui:ro
       - panel-odoo-data:/var/lib/odoo
     # On a fresh AWS volume, initialize the standard Recruitment app and
     # Jobhunter UI/chat modules automatically. On an existing database Odoo
     # leaves already-installed modules unchanged.
-    command: ['--database=jobhunter_e2e', '--db-filter=^jobhunter_e2e$', '--without-demo=all', '--init=hr_recruitment,rag_filter_agent,rag_interview_agent,t10_jobhunter_chat,aho_recruitment_ui', '--dev=xml,qweb']
+    command: ['--database=jobhunter_e2e', '--db-filter=^jobhunter_e2e$', '--without-demo=all', '--init=hr_recruitment,t10_jobhunter_chat,aho_recruitment_ui', '--dev=xml,qweb']
   backend-db:
     image: postgres:16
     environment:
@@ -57,7 +54,7 @@ services:
       JOBHUNTER_ODOO_BASE_URL: http://odoo:8069
       JOBHUNTER_OPENAI_API_KEY: ${JOBHUNTER_OPENAI_API_KEY:-${OPENAI_API_KEY:-}}
       JOBHUNTER_MODEL: ${JOBHUNTER_MODEL:-gpt-6.1-sol}
-      JOBHUNTER_REASONING_EFFORT: ${JOBHUNTER_REASONING_EFFORT:-low}
+      JOBHUNTER_REASONING_EFFORT: ${JOBHUNTER_REASONING_EFFORT:-high}
       JOBHUNTER_AGENT_ADAPTERS: '{"Filter":"app.agents:filter_adapter","Schedule":"app.agents:schedule_adapter","Interview":"app.agents:interview_adapter","Report":"app.agents:report_adapter"}'
     volumes:
       - ./backend/app:/app/backend/app:ro

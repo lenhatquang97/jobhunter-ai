@@ -57,7 +57,7 @@ class WorkflowRequest(StrictModel):
             "prepare_interview": set(),
             "report": set(),
             "schedule": {"schedule"},
-            "orchestrate": set(),
+            "orchestrate": {"schedule"},
             "confirm": {"draft_version"},
         }
         if set(self.data) - permitted[self.action]:
@@ -68,7 +68,7 @@ class WorkflowRequest(StrictModel):
             or self.data["draft_version"] <= 0
         ):
             raise ValueError("Exact draft version required")
-        if self.action == "schedule" and "schedule" in self.data:
+        if self.action in ("schedule", "orchestrate") and "schedule" in self.data:
             from .workflow_schemas import ScheduleInput
 
             ScheduleInput.model_validate(self.data["schedule"])

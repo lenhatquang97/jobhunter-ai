@@ -1,12 +1,11 @@
 """Real Odoo + specialist happy path. Provider mode is recorded separately by the runner."""
 
 import json
-import html
 import os
 import re
-import subprocess
 import time
 from pathlib import Path
+from urllib.parse import urljoin, urlsplit
 
 from playwright.sync_api import expect
 
@@ -48,53 +47,6 @@ def wait_answer(panel, number):
         timeout=125000
     )
     expect(panel.locator(".jh-run-error")).to_have_count(0)
-
-
-def test_full_orchestrator_dispatches_booking_and_waits_for_candidate(page):
-    panel = login(page)
-    panel.get_by_role("button", name="New chat", exact=True).click()
-    page.get_by_text("E2E Fiona Software Engineer", exact=True).first.click()
-    expect(page.get_by_role("heading", name="E2E Fiona Software Engineer", exact=True)).to_be_visible()
-    panel.get_by_role("button", name="Use in chat", exact=True).click()
-    workflow = panel.get_by_role("region", name="Candidate workflow")
-    workflow.get_by_role("button", name="Run full workflow", exact=True).click()
-    wait_answer(panel, 1)
-    expect(workflow.get_by_text("Automation: awaiting_candidate", exact=False)).to_be_visible()
-    expect(workflow.get_by_text(re.compile(r"Reservation #\d+ .* Invitation:"))).to_be_visible()
-    panel.get_by_role("button", name=re.compile("Worked for")).last.click()
-    activity = panel.locator(".jh-activity-body").last
-    for role in ("Orchestrator", "Filter", "Schedule", "Interview"):
-        expect(activity).to_contain_text(role)
-    expect(activity).not_to_contain_text("Report")
-
-    body = subprocess.check_output(
-        ["docker", "compose", "exec", "-T", "odoo-db", "psql", "-U", "odoo", "-d", "jobhunter_e2e", "-Atc",
-         "SELECT body_html FROM mail_mail WHERE jobhunter_workflow_session_id IS NOT NULL ORDER BY id DESC LIMIT 1"],
-        cwd=Path(__file__).resolve().parents[1], text=True,
-    )
-    match = re.search(r'href="([^"]+/jobhunter/interview/[A-Za-z0-9_-]+)"', html.unescape(body))
-    assert match, "Captured invitation did not contain a private interview link"
-    candidate = page.context.browser.new_context(viewport={"width": 1000, "height": 850}).new_page()
-    try:
-        candidate.goto(match.group(1))
-        candidate.get_by_role("button", name="Accept invitation", exact=True).click()
-        for index in range(5):
-            answer = candidate.get_by_role("textbox", name="Your answer / Câu trả lời", exact=True)
-            expect(answer).to_be_visible()
-            answer.fill(f"Synthetic accepted interview answer {index + 1} with concrete project evidence.")
-            candidate.get_by_role("button", name="Submit answer / Gửi câu trả lời", exact=True).click()
-            expect(candidate.locator("#progress")).to_contain_text(f"{index + 1} of 5 answers submitted")
-        candidate.get_by_role("button", name="Finish interview / Kết thúc", exact=True).click()
-        expect(candidate.locator("#progress")).to_contain_text("completed")
-    finally:
-        candidate.context.close()
-
-    page.reload()
-    panel.get_by_role("button", name="Open history", exact=True).click()
-    panel.locator(".jh-history-open").first.click()
-    wait_answer(panel, 2)
-    expect(panel.get_by_text("Automation: completed", exact=False)).to_be_visible()
-    expect(panel.locator(".jh-answer").last).to_contain_text(re.compile("submitted|candidate|evidence", re.I))
 
 
 def test_filter_direct_typed_interview_and_summary(browser, page):
@@ -169,7 +121,9 @@ def test_filter_direct_typed_interview_and_summary(browser, page):
     candidate_context = browser.new_context(**candidate_options)
     candidate = candidate_context.new_page()
     try:
-        candidate.goto(BASE + url)
+        target = urljoin(BASE.rstrip("/") + "/", url)
+        assert urlsplit(target).netloc == urlsplit(BASE).netloc, "Unexpected interview origin"
+        candidate.goto(target)
         expect(candidate.get_by_role("heading", name="Your interview", exact=True)).to_be_visible()
         expect(candidate.locator("#progress")).to_contain_text("0 of 5 answers submitted")
         for i in range(5):

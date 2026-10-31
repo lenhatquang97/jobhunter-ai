@@ -99,3 +99,28 @@ revisions for rollback. When enabling this on an existing deployment, first
 apply a reviewed plan using the current image so the retention setting is saved
 before requesting an image replacement. This avoids deregistering the prior
 revision and needs no broader deployment-role permissions.
+
+## Reviewed workflow and demo maintenance — 2026-10-31
+
+Full workflow preparation requires approved criteria and stops at an unbooked
+preview. Only an authenticated browser confirmation for the current draft/guide
+version can reserve a calendar slot or queue an invitation. The Schedule adapter
+may be configured as `app.agents:schedule_adapter`; it extracts supplied details
+only. Automatic dispatch capabilities are excluded. SMTP and cron remain disabled
+in this deployment. Successful delivery is not claimed.
+
+The production UI uses native `hr_recruitment_skills` for declared skills and
+expected job skills. Matching gauges, scores, comparison columns/filters and
+matching-talent entry points are hidden; no legacy RAG addon is installed.
+
+For the authorized English demo import, run a standalone app maintenance task
+with `["seed-demo", "--dry-run"]`, inspect its `DEMO_RESULT`, then run
+`["seed-demo", "--apply"]`. This is separate from the retired initializer and
+`infra/seed.py`; neither bootstrap script may be rerun. The importer accepts only
+`jobhunter_cloud`, main company ID1 and the two existing synthetic recruiters.
+It creates five `[DEMO]` positions, fifteen fictional applicants, twenty readable
+JD/CV documents, twenty-five skills and explicit synthetic skill declarations.
+External IDs use `jobhunter_demo_20261031`; existing owned records are preserved,
+unowned collisions and changed parent/company links fail, and reruns create zero
+additional records. Save the private ID manifest for verification and scoped cleanup.
+There is no user/password/permission, existing-record, stage, SMTP, cron or URL reset.

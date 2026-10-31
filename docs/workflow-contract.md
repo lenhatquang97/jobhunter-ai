@@ -65,3 +65,14 @@ Browser-only, authenticated and CSRF-validated `workflow.interview.create {case_
 No calendar or mail write occurs. The URL is returned only to the authenticated owner; it is excluded from public case summaries, model inputs and activity. Browser localStorage keeps only the nonsecret request UUID, namespaced by database/user/case/guide, enabling authenticated recovery after a lost acknowledgment or reload; a browser without the key prepares a new guide. Candidate submission/expiry/revocation rules above apply unchanged.
 
 The OWL panel is available across Recruitment screens, 420px by default and 360–640px adjustable. It uses an explicit current-record selection chip, never silently switching candidate focus. Native views and chat remain independent; this does not use OdooBot. Source checks run before/after specialist calls and before delivery, while every private streamed delta still checks cancellation/deadline without a per-token Odoo round trip.
+
+
+## Reviewed full workflow release — 2026-10-31
+
+`orchestrate` accepts the same optional `{schedule: ScheduleInput}` data as `schedule`. It requires browser-approved current criteria and runs the configured Filter, Schedule and Interview adapters through the bounded gateway. Missing scheduling details produce persisted needs-input with the real screening preserved; attendee availability is never invented. A complete result is an unbooked preview and five-question guide, with automation_state `review`. No Report activity is fabricated for this preparation run.
+
+`workflow_automation_start` requires already approved current criteria; it cannot approve them. Automatic scheduling/dispatch callbacks are excluded from signed capabilities. All reservation/mail creation goes through the existing `confirm` browser action and version/hash-bound approval, including full workflows; no internal automatic-confirm bypass remains. Confirmed full-workflow invitations wait for the candidate's explicit accept/decline response. Existing guided and direct sessions keep their behavior. The expiry cron is installed inactive; elapsed time alone does not establish participation or a hiring judgment.
+
+Schedule may be configured with `app.agents:schedule_adapter`; its extraction uses only supplied scheduling information and has no business write tools. Production SMTP/cron remain disabled, so confirmation returns configuration-required with no effects until delivery is deliberately configured. Successful reservation/mail creation is verified separately with disposable local capture.
+
+Native skill declarations remain visible; automated matching scores, matching filters/gauges and matching-talent entry points are hidden by the recruitment UI. These native comparison fields are never evidence tools or model inputs. Demo skill levels are explicitly synthetic self-report.

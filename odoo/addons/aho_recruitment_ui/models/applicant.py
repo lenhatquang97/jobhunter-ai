@@ -15,8 +15,7 @@ class HrApplicant(models.Model):
 
     aho_next_action = fields.Char('Việc tiếp theo', compute='_compute_aho_next_action')
 
-    @api.depends('active', 'recruiter_id', 'stage_id', 'stage_id.hired_stage',
-                 'rag_interview_ids', 'rag_interview_ids.state')
+    @api.depends('active', 'recruiter_id', 'stage_id', 'stage_id.hired_stage')
     def _compute_aho_next_action(self):
         for applicant in self:
             if not applicant.active:
@@ -27,11 +26,3 @@ class HrApplicant(models.Model):
                 applicant.aho_next_action = 'Cần phân công HR phụ trách'
             else:
                 applicant.aho_next_action = 'Xem hồ sơ và bằng chứng trong Jobhunter Chat'
-
-    def _compute_aho_interview_summary(self):
-        """Keep the applicant summary fields valid when legacy RAG is enabled."""
-        self._compute_aho_next_action()
-        for applicant in self:
-            sessions = applicant.rag_interview_ids if 'rag_interview_ids' in applicant._fields else self.env['rag.interview']
-            session = sessions.sorted('id', reverse=True)[:1]
-            applicant.aho_interview_state = session.state if session else 'none'

@@ -1,5 +1,6 @@
 """FastAPI app: recruiter routes (create / list / view screening sessions) and candidate routes (token in the URL)."""
 import hmac
+import html
 import logging
 import os
 from io import BytesIO
@@ -9,11 +10,13 @@ from typing import Literal
 import httpx
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from . import agent, assemblyai_demo, copilot, interview_specialist, store
+from . import agent, assemblyai_demo, copilot, interview_specialist, schedule_agent, schedule_store, store
+from .schedule_provider import SeaPostgresScheduleProvider, ScheduleProviderError
 
 _logger = logging.getLogger(__name__)
 
@@ -43,6 +46,7 @@ app.add_middleware(
     allow_headers=['*'],
 )
 store.init()
+schedule_store.init()
 DEMO_DIR = Path(__file__).resolve().parents[1] / 'mock_data' / 'interview'
 if DEMO_DIR.exists():
     app.mount('/api/copilot/demo', StaticFiles(directory=DEMO_DIR), name='copilot-demo')
@@ -132,6 +136,118 @@ def retry_report(id_: int, tasks: BackgroundTasks):
 def interview_agent_handoff(body: interview_specialist.InterviewAssignment):
     """Stable specialist boundary for a future orchestrator; never starts work implicitly."""
     return interview_specialist.run_interview_assignment(body, store.get)
+
+
+@app.post(
+    '/api/agents/schedule',
+    response_model=schedule_agent.ScheduleHandoff,
+    dependencies=[Depends(recruiter)],
+)
+def schedule_agent_handoff(body: schedule_agent.ScheduleAssignment):
+    """Bounded Schedule specialist call; delivery still requires the assignment's explicit mode."""
+    return schedule_agent.run_schedule_assignment(body, SeaPostgresScheduleProvider())
+
+
+@app.get('/api/agents/schedule/demo-candidates', dependencies=[Depends(recruiter)])
+def schedule_demo_candidates(limit: int = 3):
+    """Return safe remote fixture references, never candidate names, emails, or CV data."""
+    try:
+        return {'candidate_refs': SeaPostgresScheduleProvider().list_demo_candidate_refs(limit)}
+    except ScheduleProviderError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+@app.get('/api/agents/schedule/google/connect/{interviewer_ref}', dependencies=[Depends(recruiter)])
+def schedule_google_connect(interviewer_ref: str):
+    """Return the short-lived Google consent URL needed to refresh Calendar scopes."""
+    try:
+        return {'connect_url': SeaPostgresScheduleProvider().calendar_connect_url(interviewer_ref)}
+    except ScheduleProviderError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.get('/api/google/callback', response_class=HTMLResponse)
+def schedule_google_callback(state: str, code: str):
+    """Google OAuth callback; state binds the refresh token to one interviewer reference."""
+    try:
+        interviewer_ref = SeaPostgresScheduleProvider().finish_calendar_connect(state, code)
+    except ScheduleProviderError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return HTMLResponse(
+        '<!doctype html><html><body><h1>Google Calendar connected</h1>'
+        f'<p>Interviewer reference {html.escape(interviewer_ref)} can now be checked by Schedule.</p>'
+        '<p>You may close this tab.</p></body></html>'
+    )
+
+
+@app.get('/api/agents/schedule/outbox', dependencies=[Depends(recruiter)])
+def schedule_demo_outbox(request_ref: str):
+    """Expose response links for an authorized dry-run demo without recipient PII or email bodies."""
+    base = os.environ.get('BACKEND_URL', 'http://localhost:8000').rstrip('/')
+    return [{
+        'candidate_ref': item['candidate_ref'],
+        'state': item['state'],
+        'subject': item['subject'],
+        'response_url': f"{base}/r/schedule/{item['token']}",
+        'created_at': item['created_at'],
+    } for item in schedule_store.demo_outbox(request_ref)]
+
+
+class ScheduleResponse(BaseModel):
+    response: Literal['accepted', 'declined']
+
+
+@app.get('/api/schedule/respond/{token}')
+def schedule_response_detail(token: str):
+    invitation = schedule_store.by_token(token)
+    if not invitation:
+        raise HTTPException(404, 'invitation not found')
+    output = schedule_agent.invitation_output(invitation)
+    return {
+        'job_title': invitation['job_title'],
+        'scheduled_for_local': output.scheduled_for_local,
+        'scheduled_for_utc': output.scheduled_for_utc,
+        'timezone': output.timezone,
+        'duration_minutes': invitation['duration_minutes'],
+        'response_deadline': invitation['response_deadline'],
+        'state': invitation['state'],
+    }
+
+
+@app.post('/api/schedule/respond/{token}')
+def schedule_respond(token: str, body: ScheduleResponse):
+    invitation = schedule_store.respond(token, body.response)
+    if not invitation:
+        raise HTTPException(404, 'invitation not found')
+    if invitation['state'] not in {'accepted', 'declined'}:
+        raise HTTPException(409, f"invitation is {invitation['state']}")
+    return {'invitation_ref': f"schedule-invitation:{invitation['id']}", 'state': invitation['state']}
+
+
+@app.get('/r/schedule/{token}', response_class=HTMLResponse)
+def schedule_response_page(token: str):
+    invitation = schedule_store.by_token(token)
+    if not invitation:
+        raise HTTPException(404, 'invitation not found')
+    output = schedule_agent.invitation_output(invitation)
+    return HTMLResponse(f"""<!doctype html><html><body>
+        <h1>Phone screening invitation</h1>
+        <p>{html.escape(invitation['job_title'])}</p>
+        <p>{html.escape(output.scheduled_for_local)} ({html.escape(output.timezone)})</p>
+        <p>Status: {html.escape(invitation['state'])}</p>
+        <form method="post" action="/r/schedule/{token}/accepted"><button>Accept</button></form>
+        <form method="post" action="/r/schedule/{token}/declined"><button>Decline</button></form>
+    </body></html>""")
+
+
+@app.post('/r/schedule/{token}/{response}', response_class=HTMLResponse)
+def schedule_response_form(token: str, response: Literal['accepted', 'declined']):
+    invitation = schedule_store.respond(token, response)
+    if not invitation:
+        raise HTTPException(404, 'invitation not found')
+    return HTMLResponse(
+        f"<!doctype html><html><body><h1>Response recorded</h1><p>{invitation['state']}</p></body></html>"
+    )
 
 def write_report(id_):
     s = store.get(id_)

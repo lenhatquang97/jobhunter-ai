@@ -70,7 +70,9 @@ result = {
     "completed_history_answers": answer_count,
     "sources_current": True,
 }
-Path(".state/evidence/deployed-attempt2/acl-persistence.json").write_text(
+destination = Path(os.getenv("JOBHUNTER_ISOLATION_EVIDENCE", ".state/evidence/deployed-attempt2/acl-persistence.json"))
+destination.parent.mkdir(parents=True, exist_ok=True)
+destination.write_text(
     json.dumps(result, indent=2) + "\n"
 )
 print(json.dumps(result))

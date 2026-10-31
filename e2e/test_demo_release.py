@@ -21,7 +21,7 @@ LIVE = os.getenv('JOBHUNTER_RELEASE_LIVE') == '1'
 
 def login(page):
     page.set_viewport_size({'width': 1440, 'height': 1000})
-    page.goto(BASE + '/odoo/recruitment-applications')
+    page.goto(BASE + '/odoo/recruitment-applications', wait_until='domcontentloaded', timeout=60000)
     if '/web/login' in page.url:
         page.get_by_role('textbox', name='Email', exact=True).fill(os.getenv('JOBHUNTER_PANEL_LOGIN', 'workflow.qa1'))
         page.get_by_role('textbox', name='Password', exact=True).fill(os.getenv('JOBHUNTER_PANEL_PASSWORD', 'release-fixture-only'))
@@ -33,9 +33,11 @@ def login(page):
 
 def select_candidate(page, panel, name):
     panel.get_by_role('button', name='New chat', exact=True).click()
-    page.get_by_text(name, exact=True).first.click()
-    expect(page.get_by_role('heading', name=name, exact=True)).to_be_visible(timeout=30000)
-    panel.get_by_role('button', name='Use in chat', exact=True).click()
+    panel.get_by_role('button', name='Add Odoo context', exact=True).click()
+    picker = panel.locator('.jh-picker')
+    picker.get_by_role('button', name='Applicants', exact=True).click()
+    picker.get_by_role('textbox', name='Search Odoo records', exact=True).fill(name)
+    picker.locator('.jh-picker-select').filter(has_text=name).click()
     workflow = panel.get_by_role('region', name='Candidate workflow')
     expect(workflow.get_by_role('button', name='Review CV', exact=True)).to_be_enabled(timeout=30000)
     return workflow
@@ -82,9 +84,16 @@ def test_cv_documents_and_direct_interview(browser, page):
     panel = login(page)
     evidence = []
     marker = '[DEMO] verification ' + uuid4().hex
+    snapshots = []
+    def capture_case(response):
+        if response.url.endswith('/jobhunter/chat/rpc'):
+            data = response.json().get('result', {})
+            if isinstance(data, dict) and isinstance(data.get('case'), dict):
+                snapshots.append(data['case'])
+    page.on('response', capture_case)
     for name in ('Alex', 'Blair', 'Casey'):
         if name != 'Alex':
-            page.goto(BASE + '/odoo/recruitment-applications')
+            page.goto(BASE + '/odoo/recruitment-applications', wait_until='domcontentloaded', timeout=60000)
             expect(panel).to_be_visible(timeout=60000)
         workflow = select_candidate(page, panel, f'[DEMO] {name} - Python Backend Engineer')
         review_cv(workflow, panel)
@@ -123,8 +132,13 @@ def test_cv_documents_and_direct_interview(browser, page):
             expect(panel).to_be_visible(timeout=60000)
             panel.get_by_role('button', name='Open history', exact=True).click()
             panel.locator('.jh-history-open').first.click()
-            expect(panel.locator('.jh-answer').last).to_contain_text(marker, timeout=125000 if LIVE else 15000)
-            expect(panel.get_by_text('Automation: completed', exact=False)).to_be_visible(timeout=30000)
+            if not LIVE:
+                expect(panel.locator('.jh-answer').last).to_contain_text(marker, timeout=15000)
+            expect(panel.get_by_text('Automation: completed', exact=False)).to_be_visible(timeout=125000)
+            current = next(case for case in reversed(snapshots) if case.get('applicant_name') == '[DEMO] Alex - Python Backend Engineer')
+            answer_ids = {answer['id'] for answer in current['interview']['answers']}
+            cited_answer_ids = {source['record_id'] for source in current['report']['sources'] if source['model'] == 'jobhunter.chat.answer'}
+            assert len(answer_ids) == 5 and answer_ids <= cited_answer_ids, 'Report did not use the current submitted answers'
             expect(panel.locator('.jh-run-error')).to_have_count(0)
             expect(panel.get_by_text(re.compile('5 submitted answers'))).to_be_visible(timeout=30000)
             page.screenshot(path=str(OUT / 'interview-report.png'))

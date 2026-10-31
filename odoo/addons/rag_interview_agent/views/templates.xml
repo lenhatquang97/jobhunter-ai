@@ -56,7 +56,7 @@
                             <p class="muted" id="status"></p>
                             <button id="done" disabled="disabled">I'm done</button>
                         </div>
-                        <!-- ponytail: bump ?v= after editing interview.js, browsers cache static files for 7 days --><script src="/rag_interview_agent/static/src/interview.js?v=3"></script>
+                        <!-- Bump the version after editing interview.js to prevent stale voice logic. --><script src="/rag_interview_agent/static/src/interview.js?v=4"></script>
                     </t>
                 </main>
             </body>

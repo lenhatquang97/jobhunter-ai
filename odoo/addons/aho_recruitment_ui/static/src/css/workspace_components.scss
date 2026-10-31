@@ -84,10 +84,11 @@ body:has(.aho-sidebar-brand) {
             color: inherit !important;
             box-shadow: none !important;
         }
-        .o_searchview:focus-within + .o_searchview_dropdown_toggler {
-            border-top-color: var(--aho-outline) !important;
-            border-right-color: var(--aho-outline) !important;
-            border-bottom-color: var(--aho-outline) !important;
+        /* The dropdown closes the search input group, including when it wraps.
+           Keep its edge consistent with the field instead of the black secondary-button border. */
+        .o_cp_searchview .o_searchview_dropdown_toggler,
+        .o_cp_searchview:has(.o_searchview_dropdown_toggler.show) .o_searchview {
+            border-color: var(--aho-outline) !important;
         }
         .o_searchview input,
         .o_searchview .o_searchview_input,

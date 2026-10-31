@@ -82,3 +82,35 @@ Private plans, credentials and task/log evidence remain ignored under .state;
 no secrets are included in this report. Deployment includes the current source
 at 0b5c2a5 plus the uncommitted compatibility/maintenance changes described above.
 No source commits or pushes were made.
+
+
+## Configuration update: high reasoning effort
+
+User-requested follow-up: changed only JOBHUNTER_REASONING_EFFORT from low to
+high in the AWS runtime secret and local ignored .env, preserving every other
+runtime secret field. Forced an ECS service deployment with the existing
+jobhunter:3 task definition and unchanged application image. The replacement
+service reached rollout COMPLETED with desired/running 1 and pending 0, and its
+task is HEALTHY. ECS Exec under the application user verified the running API
+process environment contains JOBHUNTER_REASONING_EFFORT=high. Initial root-user
+/proc inspection could not read the application's environment; inspection under
+the application UID resolved that verification permission issue without changing
+container permissions. Public authentication/security/WebSocket checks and the
+read-only history/isolation checks passed again. No new provider generation was
+performed and no business records were changed for verification.
+
+
+## Responsive search border fix
+
+Reproduced the Applications search field's light-gray border beside a black
+secondary-button dropdown edge. The previous override applied only while the
+field was focused. The dropdown now uses the field's border token in all states;
+opening its menu also preserves that border on the field. Keyboard focus retains
+a visible two-pixel outline. No search behavior, filters or record operations
+were changed.
+
+Verified in disposable real Odoo at 390, 768, 1024 and 1280 px widths, including
+mobile search expansion/open filters and the Applications filter chip wrapping
+to two lines. Visible field/dropdown borders resolve to rgb(228, 228, 228), no
+horizontal overflow was observed, and typing still opens search suggestions.
+Git whitespace checks passed. Disposable containers/network were removed.

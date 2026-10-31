@@ -82,9 +82,13 @@ def public(s, full=False):
 @app.post('/api/interviews', dependencies=[Depends(recruiter)])
 def create_interview(candidate: str = Form(...), job: str = Form(...), company: str = Form(...),
                      company_background: str = Form(''), job_description: str = Form(...),
+                     job_requirements: str = Form(''),
                      cv: UploadFile | None = File(None), cv_plain: str = Form(''),
                      max_topics: int = Form(7), max_probes: int = Form(1)):
-    docs = {'company': company_background or company, 'job_description': f'{job}\n\n{job_description}',
+    role_document = f'{job}\n\nJob description:\n{job_description.strip()}'
+    if job_requirements.strip():
+        role_document += f'\n\nRequirements / must-haves:\n{job_requirements.strip()}'
+    docs = {'company': company_background or company, 'job_description': role_document,
             'cv': cv_text(cv, cv_plain)}
     missing = [k for k, v in docs.items() if len(v.strip()) < 20]
     if missing:

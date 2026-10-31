@@ -67,6 +67,12 @@ def test_report_keeps_only_submitted_answer_evidence_and_fills_unknown_criteria(
         'strengths': [],
         'gaps': [],
         'cv_claims': ['The candidate self-reported Python work.'],
+        'cv_checks': [
+            {'claim': 'Built Python APIs', 'status': 'aligned', 'statement': 'Candidate described API work.',
+             'evidence_turn_ids': ['answer-1']},
+            {'claim': 'Led a migration', 'status': 'conflicting', 'statement': 'No submitted evidence.',
+             'evidence_turn_ids': ['made-up']},
+        ],
         'findings': [
             {'criterion_id': 'current-role', 'status': 'supported', 'statement': 'Role described.',
              'evidence_turn_ids': ['answer-1']},
@@ -81,9 +87,16 @@ def test_report_keeps_only_submitted_answer_evidence_and_fills_unknown_criteria(
     assert findings['current-role']['evidence_turn_ids'] == ['answer-1']
     assert findings['motivation']['status'] == 'unknown'
     assert findings['availability']['status'] == 'unknown'
+    assert result['cv_checks'][0]['status'] == 'aligned'
+    assert result['cv_checks'][0]['evidence_turn_ids'] == ['answer-1']
+    assert result['cv_checks'][1]['status'] == 'unverified'
+    assert result['cv_checks'][1]['statement'] == 'Not verified by a submitted candidate answer.'
+    assert findings['motivation']['statement'] == 'Not covered by a submitted candidate answer.'
 
 
 def test_screening_prompt_does_not_infer_scripted_or_ai_generated_answers():
     prompt = agent.turn_system('Dev', 'Acme', 'state')
     assert 'scripted_answer' not in prompt
     assert 'Do not infer whether an answer was written by AI' in prompt
+    assert 'basic JD check' in prompt
+    assert 'company_context_mismatch' in prompt

@@ -24,12 +24,17 @@ def _create(client):
             "company": "Acme",
             "company_background": "Acme builds useful software products.",
             "job_description": "Build and maintain Python backend services.",
+            "job_requirements": "Two years of Python and API development experience.",
             "cv_plain": "Candidate built Python APIs for several projects.",
             "max_topics": "1",
             "max_probes": "0",
         })
     assert response.status_code == 200
-    return response.json()
+    created = response.json()
+    stored = store.get(created["id"])
+    assert "Requirements / must-haves" in stored["docs"]["job_description"]
+    assert "Two years of Python" in stored["docs"]["job_description"]
+    return created
 
 
 def test_submitted_answer_gets_stable_evidence_id_and_language(tmp_path, monkeypatch):

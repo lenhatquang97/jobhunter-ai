@@ -2,7 +2,8 @@ import React from "react";
 import { api, useRecruiterToken } from "./api";
 
 type Finding = { criterion_id: string; status: string; statement: string; evidence_turn_ids: string[] };
-type Report = { summary?: string; strengths?: string[]; gaps?: string[]; cv_claims?: string[]; findings?: Finding[] };
+type CvCheck = { claim: string; status: string; statement: string; evidence_turn_ids: string[] };
+type Report = { summary?: string; strengths?: string[]; gaps?: string[]; cv_claims?: string[]; cv_checks?: CvCheck[]; findings?: Finding[] };
 type SubmittedTurn = { id: string; question: string; answer: string; language?: string; submitted_at?: string; topic?: string };
 type Session = {
   id: number; candidate: string; job: string; company: string; state: string;
@@ -63,8 +64,9 @@ export function RecruiterScreening() {
         <label>Candidate name<input name="candidate" required /></label>
         <label>Role<input name="job" required /></label>
         <label>Company<input name="company" required /></label>
-        <label className="wide">Company background<textarea name="company_background" required minLength={20} /></label>
-        <label className="wide">Job description<textarea name="job_description" required minLength={20} /></label>
+        <label className="wide">Company interview context<textarea name="company_background" required minLength={20} placeholder="Products and mission; team and ways of working; salary band; onsite/hybrid/remote arrangement; location; benefits or policies; hiring process." /><small className="muted">Only include facts the screening agent may explain or compare with the candidate's expectations.</small></label>
+        <label className="wide">Job description<textarea name="job_description" required minLength={20} placeholder="Role purpose, responsibilities, team and day-to-day work." /></label>
+        <label className="wide">Job requirements / must-haves<textarea name="job_requirements" placeholder="Required experience, skills, qualifications, language, location or availability constraints." /><small className="muted">The agent asks light questions grounded in the JD and must-haves, not a technical deep-dive.</small></label>
         <label className="wide">CV (PDF/TXT)<input name="cv" type="file" accept=".pdf,.txt" /></label>
         <label className="wide">Or paste CV text<textarea name="cv_plain" minLength={20} /></label>
         <div className="row wide"><label>Topics<input name="max_topics" type="number" min="1" max="12" defaultValue="7" /></label><label>Follow-ups per topic<input name="max_probes" type="number" min="0" max="6" defaultValue="1" /></label></div>
@@ -93,6 +95,9 @@ export function RecruiterScreening() {
           </div>
           <div><h3>AI evidence draft</h3>{!selected.report && <p className="muted">Report is not available yet. Refresh after the interview finishes.</p>}
             {selected.report?.summary && <p>{selected.report.summary}</p>}
+            {!!selected.flags?.length && <><h3>Interview flags</h3><ul>{selected.flags.map((flag) => <li key={flag}>{flag}</li>)}</ul></>}
+            {!!selected.report?.cv_checks?.length && <><h3>CV claim checks</h3><p className="muted">Consistency with an answer is not independent proof that a claim is true.</p><div className="review-findings">{selected.report.cv_checks.map((check, index) => <article key={`${check.claim}-${index}`}><span className={`status ${check.status}`}>{check.status}</span><strong>{check.claim}</strong><p>{check.statement}</p><small>{check.evidence_turn_ids.join(", ") || "Not verified by a submitted answer"}</small></article>)}</div></>}
+            <h3>Screening rubric</h3>
             <div className="review-findings">{selected.report?.findings?.map((finding) => <article key={finding.criterion_id}><span className={`status ${finding.status}`}>{finding.status}</span><strong>{finding.criterion_id}</strong><p>{finding.statement}</p><small>{finding.evidence_turn_ids.join(", ") || "No candidate evidence"}</small></article>)}</div>
           </div>
         </div>

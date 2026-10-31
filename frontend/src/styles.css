@@ -39,6 +39,8 @@ textarea { min-height: 90px; resize: vertical; }
 .status { display: inline-flex; width: max-content; border-radius: 999px; padding: .28rem .6rem; background: #e9edf5; color: #546078; font-size: .75rem; text-transform: capitalize; }
 .status.running, .status.supported, .status.reported { background: #ddf6e8; color: #17633b; }
 .status.partial, .status.conflicting { background: #fff1cb; color: #75520a; }
+.status.aligned { background: #ddf6e8; color: #17633b; }
+.status.unverified { background: #e9edf5; color: #546078; }
 .status.unknown, .status.error { background: #f9e4e7; color: #922c38; }
 .candidate-shell { min-height: 100vh; display: grid; place-content: center; gap: 1rem; padding: 1rem; background: radial-gradient(circle at top, #e8edff, #f7f8fc 55%); }
 .candidate-card { width: min(680px, calc(100vw - 2rem)); }

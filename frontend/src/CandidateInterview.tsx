@@ -26,11 +26,16 @@ export function CandidateInterview({ token }: { token: string }) {
   const peer = React.useRef<RTCPeerConnection | null>(null);
   const stream = React.useRef<MediaStream | null>(null);
   const dataChannel = React.useRef<RTCDataChannel | null>(null);
+  const remoteAudio = React.useRef<HTMLAudioElement | null>(null);
 
   const closeVoice = React.useCallback(() => {
     dataChannel.current?.close(); dataChannel.current = null;
     peer.current?.close(); peer.current = null;
     stream.current?.getTracks().forEach((track) => track.stop()); stream.current = null;
+    if (remoteAudio.current) {
+      remoteAudio.current.pause();
+      remoteAudio.current.srcObject = null;
+    }
     setVoiceStatus("Enable English voice");
   }, []);
 
@@ -99,8 +104,13 @@ export function CandidateInterview({ token }: { token: string }) {
         method: "POST", body: JSON.stringify({ consent: true }),
       });
       const pc = new RTCPeerConnection(); peer.current = pc;
-      const audio = new Audio(); audio.autoplay = true;
-      pc.ontrack = (event) => { audio.srcObject = event.streams[0]; };
+      pc.ontrack = (event) => {
+        if (!remoteAudio.current) return;
+        remoteAudio.current.srcObject = event.streams[0];
+        void remoteAudio.current.play().catch(() => {
+          setError("Browser blocked interview audio. Allow sound for this site, then click Enable English voice again.");
+        });
+      };
       pc.addTrack(stream.current.getTracks()[0]);
       const dc = pc.createDataChannel("oai-events"); dataChannel.current = dc;
       dc.onmessage = (event) => {
@@ -138,6 +148,7 @@ export function CandidateInterview({ token }: { token: string }) {
   if (!page.open && !done) return <main className="candidate-shell"><section className="candidate-card"><h1>This interview link is closed</h1></section></main>;
 
   return <main className="candidate-shell">
+    <audio className="background-audio" ref={remoteAudio} autoPlay playsInline />
     <section className="candidate-card brand"><p className="eyebrow">AI screening interview</p><h1>{page.job}</h1><p className="muted">{page.company}</p></section>
     {!started ? <section className="candidate-card">
       <h2>Before you begin</h2>
